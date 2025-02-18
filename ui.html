@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body {
+      font-family: Inter, sans-serif;
+      padding: 20px;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #333;
+    }
+    textarea {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+      min-height: 80px;
+      resize: vertical;
+    }
+    button {
+      background: #18A0FB;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    button:hover {
+      background: #0D8DE3;
+    }
+    #status {
+      color: #666;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h3>AI Design Assistant</h3>
+    
+    <div class="form-group">
+      <label for="prompt">Design Prompt</label>
+      <textarea id="prompt" placeholder="Describe the design you want to generate..."></textarea>
+    </div>
+
+    <button id="generateBtn">Generate Design</button>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    document.getElementById('generateBtn').onclick = () => {
+      const prompt = document.getElementById('prompt').value;
+      if (!prompt) {
+        document.getElementById('status').textContent = 'Please enter a design prompt';
+        return;
+      }
+
+      document.getElementById('status').textContent = 'Generating design...';
+      
+      parent.postMessage({ 
+        pluginMessage: { 
+          type: 'generate-design',
+          prompt
+        } 
+      }, '*');
+    };
+
+    window.onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      if (msg.type === 'status') {
+        document.getElementById('status').textContent = msg.message;
+      }
+    };
+  </script>
+</body>
+</html> 

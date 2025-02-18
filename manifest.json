@@ -1,0 +1,14 @@
+{
+  "name": "AI Design Assistant",
+  "id": "ai-design-assistant",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": [
+      "https://api.openai.com",
+      "https://genius-south-india.openai.azure.com"
+    ]
+  }
+} 
