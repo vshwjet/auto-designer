@@ -30,7 +30,8 @@ import {
   isBreadcrumbsProperties,
   isDropdownsProperties,
   isSelectionProperties,
-  isCursorsProperties
+  isCursorsProperties,
+  isInputFieldsProperties
 } from './utils';
 
 import { generateDesign } from './services/openai';
@@ -44,6 +45,56 @@ async function createComponent(parent: FrameNode, spec: ComponentSpec): Promise<
     }
     const instance = component.createInstance();
     parent.appendChild(instance);
+
+    // Set component properties based on type
+    if (instance.setProperties) {
+      // Debug: Log available properties
+      console.log('Component type:', spec.type);
+      console.log('Available properties:', instance.componentProperties);
+      
+      if (spec.type === "InputField" && isInputFieldsProperties(spec.properties)) {
+        // Add text-related properties and boolean flags
+        const props = {
+          // Text properties
+          "Label Text#9987:546": spec.properties.labelInfo || "",
+          "Text Placeholder#10157:2": spec.properties.placeholder || "",
+          "Text Filled#10157:43": spec.properties.value || "",
+          // Boolean flags
+          "Has Label#9987:455": spec.properties.hasLabel,
+          "Has Hint#9987:637": spec.properties.hasHint,
+          "Has Help Icon#9987:910": false,
+          "Has Main Icon#9987:819": false,
+          // Hint text (only if hint is enabled)
+          "Hint Text#9987:728": spec.properties.hasHint ? spec.properties.hintText || "" : ""
+        };
+        console.log('Setting InputField properties:', props);
+        instance.setProperties(props);
+      } else if (spec.type === "Button" && isButtonProperties(spec.properties)) {
+        const props = {
+          // Text properties
+          "Button Text#9995:0": spec.properties.label || "Button",
+          // Boolean flags
+          "Has Text#9995:121": true,
+          "Has Leading Icon#9995:484": false,
+          "Has Trailing Icon#10131:0": false,
+          // Icon instances (only if icons are enabled)
+          "Leading Icon#9995:363": "27158:26282",
+          "Trailing Icon#10131:289": "27158:26280"
+        };
+        console.log('Setting Button properties:', props);
+        instance.setProperties(props);
+      } else if (spec.type === "Dropdown" && isDropdownsProperties(spec.properties)) {
+        const props = {
+          "Label Text#9987:546": spec.properties.label || "",
+          "Text Placeholder#10157:2": spec.properties.placeholder || ""
+        };
+        console.log('Setting Dropdown properties:', props);
+        instance.setProperties(props);
+      }
+    } else {
+      console.warn('Component does not support setting properties:', spec.type);
+    }
+
     return instance;
   } catch (error) {
     console.error(`Error creating component: ${error}`);
@@ -56,10 +107,9 @@ async function createFrameWithComponents(frameSpec: Frame): Promise<FrameNode> {
   const frame = figma.createFrame();
   frame.name = frameSpec.name;
   
-  // Ensure minimum dimensions (Figma requires at least 0.01)
+  // Set width (ensure minimum of 0.01)
   const width = Math.max(frameSpec.width, 0.01);
-  const height = Math.max(frameSpec.height, 0.01);
-  frame.resize(width, height);
+  frame.resize(width, 0.01); // Initially set minimum height
   
   // Set background if specified
   if (frameSpec.background) {
@@ -83,9 +133,9 @@ async function createFrameWithComponents(frameSpec: Frame): Promise<FrameNode> {
     frame.paddingBottom = frameSpec.layout.padding.bottom;
     frame.paddingLeft = frameSpec.layout.padding.left;
 
-    // For frames with auto-layout, set sizing mode
-    frame.primaryAxisSizingMode = height === 0.01 ? "AUTO" : "FIXED";
-    frame.counterAxisSizingMode = width === 0.01 ? "AUTO" : "FIXED";
+    // Set sizing modes
+    frame.primaryAxisSizingMode = frameSpec.height === 0.01 ? "AUTO" : "FIXED";
+    frame.counterAxisSizingMode = frameSpec.width === 0.01 ? "AUTO" : "FIXED";
   }
 
   // Create child frames recursively
@@ -101,6 +151,11 @@ async function createFrameWithComponents(frameSpec: Frame): Promise<FrameNode> {
     for (const component of frameSpec.components) {
       await createComponent(frame, component);
     }
+  }
+
+  // If height is not auto (0.01), set it to specified height
+  if (frameSpec.height !== 0.01) {
+    frame.resize(frame.width, Math.max(frameSpec.height, frame.height));
   }
 
   return frame;

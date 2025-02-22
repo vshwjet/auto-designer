@@ -150,6 +150,7 @@ export interface ButtonProperties {
   Type: ButtonTypeValue;
   State: ButtonStateValue;
   Width: ButtonWidthValue;
+  label?: string;
 }
 
 export interface BreadcrumbsProperties {
@@ -161,6 +162,8 @@ export interface DropdownsProperties {
   "State Visibility": string;
   "Label Visibility": string;
   "Stacking Direction": string;
+  label?: string;
+  placeholder?: string;
 }
 
 export interface SelectionProperties {
@@ -185,6 +188,7 @@ export interface InputFieldsProperties {
   isMandatory: boolean;
   placeholder: string;
   value: string;
+  hintText?: string;
 }
 
 export type CustomComponentProperties = 

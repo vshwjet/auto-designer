@@ -4,7 +4,8 @@ import {
   BreadcrumbsProperties,
   DropdownsProperties,
   SelectionProperties,
-  CursorsProperties
+  CursorsProperties,
+  InputFieldsProperties
 } from './types';
 
 // Type guard functions
@@ -26,4 +27,8 @@ export function isSelectionProperties(props: CustomComponentProperties): props i
 
 export function isCursorsProperties(props: CustomComponentProperties): props is CursorsProperties {
   return 'Type' in props && !('Divider' in props) && !('State' in props);
+}
+
+export function isInputFieldsProperties(props: CustomComponentProperties): props is InputFieldsProperties {
+  return 'size' in props && 'variant' in props && 'type' in props && 'state' in props && 'labelInfo' in props;
 } 

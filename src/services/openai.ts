@@ -12,12 +12,14 @@ const systemPrompt = `You are a design system expert. Your task is to generate U
 
 IMPORTANT: You must ONLY respond with a valid JSON object matching the exact format specified below. Do not include any explanations, markdown, or additional text before or after the JSON.
 
+First figure out the layout and the content that needs to be added for the UI. Then, generate the UI layout using the component library. 
+
 Required Response Format:
 {
   "frame": {
     "name": "string",
-    "width": number,
-    "height": number,
+    "width": number, // Use actual width in pixels (e.g. 1728 for desktop)
+    "height": number, // Use 0.01 for auto-height (will automatically adjust based on content)
     "layout": {
       "type": "NONE" | "VERTICAL" | "HORIZONTAL",
       "padding": {
@@ -68,14 +70,13 @@ Required Response Format:
   }
 }
 
+Note: For frames that should automatically adjust their height based on content, set the height to 0.01. This will make the frame "hug" its contents.
+
 Available Components and Their Keys:
 
 1. Buttons:
-   - Sizes: large, medium, small
-   - Hierarchies: primary, secondary
-   - Types: solid fill
-   - States: default, hover, focused, disabled
-   - Widths: half, full
+   Properties that can be modified in Figma:
+   - "Label": The button's text label
    
    Required Properties Format:
    {
@@ -83,7 +84,8 @@ Available Components and Their Keys:
      "Hirerchey": "Primary",
      "Type": "Solid Fill",
      "State": "Default" | "Hover" | "Focused" | "Disabled",
-     "Width": "Half" | "Full"
+     "Width": "Half" | "Full",
+     "label": "string" // This will be used as the button's text
    }
    
    Component Keys:
@@ -124,16 +126,17 @@ Available Components and Their Keys:
    - Disabled: "9ecba56d62d1cfb864c6060d1f5dc791ca6ab992"
 
 2. Dropdowns:
-   - Sizes: large, medium
-   - Hierarchies: secondary, tertiary
-   - Types: single select, multiselect
-   - States: default, hovered, focused, opened, filled, disabled
+   Properties that can be modified in Figma:
+   - "Label Text": The dropdown's label
+   - "Placeholder Text": The placeholder text shown when no option is selected
    
    Required Properties Format:
    {
      "State Visibility": "default" | "hovered" | "focused" | "opened" | "filled" | "disabled",
      "Label Visibility": "Visible",
-     "Stacking Direction": "Vertical"
+     "Stacking Direction": "Vertical",
+     "label": "string", // This will be used as the dropdown's label
+     "placeholder": "string" // This will be used as the placeholder text
    }
    
    Component Keys:
@@ -202,10 +205,11 @@ Available Components and Their Keys:
    - Disabled: "5e5337c8f323ed562bbf59cd6861c594b69049f8"
 
 3. Input Fields:
-   - Sizes: medium, small
-   - Variants: placeholder, filled
-   - Types: text, phone number, floating label text, floating label number
-   - States: default, hovered, focused, disabled, error
+   Properties that can be modified in Figma:
+   - "Label Text": The input field's label
+   - "Placeholder Text": The placeholder text
+   - "Input Text": The current value of the input field
+   - "Hint Text": The hint text shown below the input field (only shown when hasHint is true)
    
    Required Properties Format:
    {
@@ -217,10 +221,11 @@ Available Components and Their Keys:
      "rightIcon": boolean,
      "leftIcon": boolean,
      "hasHint": boolean,
-     "labelInfo": string,
+     "labelInfo": "string", // This will be used as the Label Text
      "isMandatory": boolean,
-     "placeholder": string,
-     "value": string
+     "placeholder": "string", // This will be used as the Placeholder Text
+     "value": "string", // This will be used as the Input Text for the filled variant
+     "hintText": "string" // This will be used as the Hint Text when hasHint is true
    }
    
    Component Keys:
@@ -367,11 +372,12 @@ Example Response:
           "hasLabel": true,
           "rightIcon": false,
           "leftIcon": false,
-          "hasHint": false,
-          "labelInfo": "Name",
+          "hasHint": true,
+          "labelInfo": "Full Name",
           "isMandatory": true,
-          "placeholder": "Enter your name",
-          "value": ""
+          "placeholder": "Enter your full name",
+          "value": "",
+          "hintText": "Enter your legal full name as it appears on your ID"
         }
       }
     ]
@@ -421,7 +427,7 @@ export async function generateDesign(prompt: string): Promise<LLMResponse> {
       body: JSON.stringify({
         messages,
         temperature: 0.7,
-        max_tokens: 800,
+        max_tokens: 2000,
         top_p: 0.95,
         frequency_penalty: 0,
         presence_penalty: 0,
