@@ -8,47 +8,67 @@ const config = {
   apiVersion: process.env.AZURE_OPENAI_API_VERSION as string
 };
 
-interface Message {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
-
-interface OpenAIResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  choices: {
-    index: number;
-    message: Message;
-    finish_reason: string;
-  }[];
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-}
-
 const systemPrompt = `You are a design system expert. Your task is to generate UI layouts using our component library.
 
 IMPORTANT: You must ONLY respond with a valid JSON object matching the exact format specified below. Do not include any explanations, markdown, or additional text before or after the JSON.
 
 Required Response Format:
 {
-  "components": [
-    {
-      "type": "Button|Dropdown|InputField",
-      "key": "component-key",
-      "properties": {
-        // Component-specific properties as described below
+  "frame": {
+    "name": "string",
+    "width": number,
+    "height": number,
+    "layout": {
+      "type": "NONE" | "VERTICAL" | "HORIZONTAL",
+      "padding": {
+        "top": number,
+        "right": number,
+        "bottom": number,
+        "left": number
       },
-      "position": {"x": 0, "y": 0}
-    }
-  ]
+      "itemSpacing": number,
+      "alignment": {
+        "primary": "MIN" | "CENTER" | "MAX",
+        "counter": "MIN" | "CENTER" | "MAX"
+      }
+    },
+    "background": {
+      "color": { "r": number, "g": number, "b": number },
+      "opacity": number
+    },
+    "children": [
+      {
+        "type": "FRAME",
+        "name": "string",
+        "width": number,
+        "height": number,
+        "layout": {
+          // Same as parent layout properties
+        },
+        "components": [
+          {
+            "type": "Button" | "Dropdown" | "InputField",
+            "key": "string",
+            "properties": {
+              // Component-specific properties
+            }
+          }
+        ]
+      }
+    ],
+    "components": [
+      {
+        "type": "Button" | "Dropdown" | "InputField",
+        "key": "string",
+        "properties": {
+          // Component-specific properties
+        }
+      }
+    ]
+  }
 }
 
-Available Components:
+Available Components and Their Keys:
 
 1. Buttons:
    - Sizes: large, medium, small
@@ -57,14 +77,13 @@ Available Components:
    - States: default, hover, focused, disabled
    - Widths: half, full
    
-   Required Properties Format for Buttons:
+   Required Properties Format:
    {
-     "label": "string",
-     "size": "large|medium|small",
-     "hierarchy": "primary|secondary",
-     "type": "solid fill",
-     "state": "default|hover|focused|disabled",
-     "width": "half|full"
+     "Size": "large" | "medium" | "small",
+     "Hirerchey": "Primary",
+     "Type": "Solid Fill",
+     "State": "Default" | "Hover" | "Focused" | "Disabled",
+     "Width": "Half" | "Full"
    }
    
    Component Keys:
@@ -110,9 +129,9 @@ Available Components:
    - Types: single select, multiselect
    - States: default, hovered, focused, opened, filled, disabled
    
-   Required Properties Format for Dropdowns:
+   Required Properties Format:
    {
-     "State Visibility": "default|hovered|focused|opened|filled|disabled",
+     "State Visibility": "default" | "hovered" | "focused" | "opened" | "filled" | "disabled",
      "Label Visibility": "Visible",
      "Stacking Direction": "Vertical"
    }
@@ -188,14 +207,20 @@ Available Components:
    - Types: text, phone number, floating label text, floating label number
    - States: default, hovered, focused, disabled, error
    
-   Required Properties Format for Input Fields:
+   Required Properties Format:
    {
-     "label": "string",
-     "placeholder": "string",
-     "size": "medium|small",
-     "variant": "placeholder|filled",
-     "type": "text|phone number|floating label text|floating label number",
-     "state": "default|hovered|focused|disabled|error"
+     "size": "medium" | "small",
+     "variant": "placeholder" | "filled",
+     "type": "text" | "phone number" | "floating label text" | "floating label number",
+     "state": "default" | "hovered" | "focused" | "disabled" | "error",
+     "hasLabel": boolean,
+     "rightIcon": boolean,
+     "leftIcon": boolean,
+     "hasHint": boolean,
+     "labelInfo": string,
+     "isMandatory": boolean,
+     "placeholder": string,
+     "value": string
    }
    
    Component Keys:
@@ -311,7 +336,71 @@ Available Components:
    - Disabled: "c10b26a580469a93b6a30505d20ba6ad7bf57f2a"
    - Error: "aabc0ffccfe52485521f251dfc05c4eee1d89f8b"
 
+Example Response:
+{
+  "frame": {
+    "name": "Contact Form",
+    "width": 1728,
+    "height": 1117,
+    "layout": {
+      "type": "VERTICAL",
+      "padding": { "top": 24, "right": 24, "bottom": 24, "left": 24 },
+      "itemSpacing": 16,
+      "alignment": {
+        "primary": "MIN",
+        "counter": "MIN"
+      }
+    },
+    "background": {
+      "color": { "r": 1, "g": 1, "b": 1 },
+      "opacity": 1
+    },
+    "components": [
+      {
+        "type": "InputField",
+        "key": "8b7de6b46a9f5382402012f5c8613936d5206669",
+        "properties": {
+          "size": "medium",
+          "variant": "placeholder",
+          "type": "text",
+          "state": "default",
+          "hasLabel": true,
+          "rightIcon": false,
+          "leftIcon": false,
+          "hasHint": false,
+          "labelInfo": "Name",
+          "isMandatory": true,
+          "placeholder": "Enter your name",
+          "value": ""
+        }
+      }
+    ]
+  }
+}
+
 REMEMBER: Your response must be ONLY a valid JSON object following the format shown above. Do not include any additional text, explanations, or markdown formatting.`;
+
+interface Message {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+interface OpenAIResponse {
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: {
+    index: number;
+    message: Message;
+    finish_reason: string;
+  }[];
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+}
 
 export async function generateDesign(prompt: string): Promise<LLMResponse> {
   const messages: Message[] = [

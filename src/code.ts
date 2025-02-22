@@ -10,7 +10,9 @@ import {
   ComponentSpec,
   CustomComponentProperties,
   LLMResponse,
-  PluginMessage
+  PluginMessage,
+  Frame,
+  FrameLayout
 } from './types';
 
 import { 
@@ -49,43 +51,57 @@ async function createComponent(parent: FrameNode, spec: ComponentSpec): Promise<
   }
 }
 
-async function createDesignFrame(designSpec: LLMResponse): Promise<FrameNode> {
-  // Create frame and set up auto layout
+async function createFrameWithComponents(frameSpec: Frame): Promise<FrameNode> {
+  // Create frame
   const frame = figma.createFrame();
-  frame.name = "Generated Design";
-  frame.resize(1728, 1117); // Desktop frame size
+  frame.name = frameSpec.name;
   
-  // Set background fill
-  frame.fills = [{
-    type: 'SOLID',
-    color: { r: 1, g: 1, b: 1 },
-    opacity: 1
-  }];
-
-  // Set up auto layout
-  frame.layoutMode = "VERTICAL";
-  frame.primaryAxisAlignItems = "MIN";
-  frame.counterAxisAlignItems = "MIN";
-  frame.primaryAxisSizingMode = "FIXED";
-  frame.counterAxisSizingMode = "FIXED";
-  frame.itemSpacing = 16;
+  // Ensure minimum dimensions (Figma requires at least 0.01)
+  const width = Math.max(frameSpec.width, 0.01);
+  const height = Math.max(frameSpec.height, 0.01);
+  frame.resize(width, height);
   
-  // Set padding
-  frame.paddingLeft = 24;
-  frame.paddingRight = 24;
-  frame.paddingTop = 24;
-  frame.paddingBottom = 24;
-
-  // Create components
-  for (const component of designSpec.components) {
-    const instance = await createComponent(frame, component);
-    // Components will maintain their default width
+  // Set background if specified
+  if (frameSpec.background) {
+    frame.fills = [{
+      type: 'SOLID',
+      color: frameSpec.background.color,
+      opacity: frameSpec.background.opacity
+    }];
   }
 
-  // Center frame in viewport
-  const viewport = figma.viewport.center;
-  frame.x = viewport.x - frame.width / 2;
-  frame.y = viewport.y - frame.height / 2;
+  // Set layout properties
+  if (frameSpec.layout.type !== "NONE") {
+    frame.layoutMode = frameSpec.layout.type;
+    frame.primaryAxisAlignItems = frameSpec.layout.alignment.primary;
+    frame.counterAxisAlignItems = frameSpec.layout.alignment.counter;
+    frame.itemSpacing = frameSpec.layout.itemSpacing;
+    
+    // Set padding
+    frame.paddingTop = frameSpec.layout.padding.top;
+    frame.paddingRight = frameSpec.layout.padding.right;
+    frame.paddingBottom = frameSpec.layout.padding.bottom;
+    frame.paddingLeft = frameSpec.layout.padding.left;
+
+    // For frames with auto-layout, set sizing mode
+    frame.primaryAxisSizingMode = height === 0.01 ? "AUTO" : "FIXED";
+    frame.counterAxisSizingMode = width === 0.01 ? "AUTO" : "FIXED";
+  }
+
+  // Create child frames recursively
+  if (frameSpec.children) {
+    for (const childSpec of frameSpec.children) {
+      const childFrame = await createFrameWithComponents(childSpec);
+      frame.appendChild(childFrame);
+    }
+  }
+
+  // Create components within this frame
+  if (frameSpec.components) {
+    for (const component of frameSpec.components) {
+      await createComponent(frame, component);
+    }
+  }
 
   return frame;
 }
@@ -108,7 +124,12 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
         const designSpec = await generateDesign(msg.prompt);
         
         // Create the design frame with components
-        const frame = await createDesignFrame(designSpec);
+        const frame = await createFrameWithComponents(designSpec.frame);
+        
+        // Center the frame in viewport
+        const viewport = figma.viewport.center;
+        frame.x = viewport.x - frame.width / 2;
+        frame.y = viewport.y - frame.height / 2;
         
         // Center the view on the generated design
         figma.viewport.scrollAndZoomIntoView([frame]);
