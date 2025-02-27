@@ -167,6 +167,7 @@ export interface DropdownsProperties {
   "Has Hint Text": boolean;
   "Dropdown Label": string;
   "Dropdown Hint": string;
+  placeholder?: string;
 }
 
 export interface SelectionProperties {

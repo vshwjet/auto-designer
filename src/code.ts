@@ -44,9 +44,34 @@ import {
 
 import { generateDesign } from './services/openai';
 
+// Helper function to load all Inter font styles
+async function loadInterFonts() {
+  const fontStyles = [
+    "Thin",
+    "Extra Light",
+    "Light",
+    "Regular",
+    "Medium",
+    "Semi Bold",
+    "Bold",
+    "Extra Bold",
+    "Black"
+  ];
+
+  // Load all font styles
+  await Promise.all(
+    fontStyles.map(style => 
+      figma.loadFontAsync({ family: "Inter", style })
+    )
+  );
+}
+
 async function createComponent(parent: FrameNode, spec: ComponentSpec): Promise<InstanceNode | null> {
   try {
     let key = spec.key;
+    
+    // Load all Inter fonts at the start
+    await loadInterFonts();
     
     // Get the appropriate key based on component type and properties
     if (spec.type === "TableCell" && isTableCellProperties(spec.properties)) {
@@ -114,6 +139,30 @@ async function createComponent(parent: FrameNode, spec: ComponentSpec): Promise<
         };
         console.log('Setting Dropdown properties:', props);
         instance.setProperties(props);
+
+        // Find and update the placeholder text if provided
+        if (spec.properties.placeholder) {
+          // Fonts are already loaded at the start of createComponent
+          // Find the text node that contains the placeholder text
+          const findPlaceholderTextNode = (node: SceneNode): TextNode | null => {
+            if (node.type === 'TEXT' && node.characters.toLowerCase().includes('select')) {
+              return node as TextNode;
+            }
+            if ('children' in node) {
+              for (const child of node.children) {
+                const result = findPlaceholderTextNode(child);
+                if (result) return result;
+              }
+            }
+            return null;
+          };
+
+          // Find the text node and update its characters
+          const textNode = findPlaceholderTextNode(instance);
+          if (textNode) {
+            textNode.characters = spec.properties.placeholder;
+          }
+        }
       } else if (spec.type === "StatCard" && isStatCardProperties(spec.properties)) {
         const props = {
           // Use the exact Figma instance property names with their IDs

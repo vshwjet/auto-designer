@@ -131,6 +131,7 @@ Available Components and Their Keys:
    - "Dropdown Hint": The hint text shown below the dropdown
    - "Has Label": Whether to show the label
    - "Has Hint Text": Whether to show the hint text
+   - "placeholder": The text shown in the dropdown when no option is selected
    
    Required Properties Format:
    {
@@ -141,7 +142,8 @@ Available Components and Their Keys:
      "Has Label": boolean,
      "Has Hint Text": boolean,
      "Dropdown Label": "string", // This will be used as the dropdown's label
-     "Dropdown Hint": "string" // This will be used as the hint text
+     "Dropdown Hint": "string", // This will be used as the hint text
+     "placeholder": "string" // This will be used as the default text shown in the dropdown
    }
    
    Component Keys:

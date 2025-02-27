@@ -111,7 +111,8 @@ export function createDropdownProperties(
   hierarchy: DropdownHierarchyValue,
   size: DropdownSizeValue,
   type: DropdownTypeValue,
-  state: DropdownStateValue
+  state: DropdownStateValue,
+  placeholder?: string
 ): DropdownsProperties {
   return {
     Size: size,
@@ -121,6 +122,7 @@ export function createDropdownProperties(
     "Has Label": true,
     "Has Hint Text": false,
     "Dropdown Label": "",
-    "Dropdown Hint": ""
+    "Dropdown Hint": "",
+    placeholder
   };
 } 
