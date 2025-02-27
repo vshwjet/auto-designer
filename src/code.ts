@@ -12,7 +12,10 @@ import {
   LLMResponse,
   PluginMessage,
   Frame,
-  FrameLayout
+  FrameLayout,
+  StatCardTypeValue,
+  TableCellProperties,
+  TableCellVariantValue
 } from './types';
 
 import { 
@@ -22,7 +25,9 @@ import {
   getDropdownKey,
   createDropdownProperties,
   getInputFieldKey,
-  createInputFieldProperties
+  createInputFieldProperties,
+  getTableCellKey,
+  createTableCellProperties
 } from './componentRegistry';
 
 import { 
@@ -31,16 +36,26 @@ import {
   isDropdownsProperties,
   isSelectionProperties,
   isCursorsProperties,
-  isInputFieldsProperties
+  isInputFieldsProperties,
+  isStatCardProperties,
+  isTableColumnProperties,
+  isTableCellProperties
 } from './utils';
 
 import { generateDesign } from './services/openai';
 
 async function createComponent(parent: FrameNode, spec: ComponentSpec): Promise<InstanceNode | null> {
   try {
-    const component = await figma.importComponentByKeyAsync(spec.key);
+    let key = spec.key;
+    
+    // Get the appropriate key based on component type and properties
+    if (spec.type === "TableCell" && isTableCellProperties(spec.properties)) {
+      key = getTableCellKey(spec.properties);
+    }
+    
+    const component = await figma.importComponentByKeyAsync(key);
     if (!component) {
-      console.error(`Component not found for key: ${spec.key}`);
+      console.error(`Component not found for key: ${key}`);
       return null;
     }
     const instance = component.createInstance();
@@ -85,11 +100,79 @@ async function createComponent(parent: FrameNode, spec: ComponentSpec): Promise<
         instance.setProperties(props);
       } else if (spec.type === "Dropdown" && isDropdownsProperties(spec.properties)) {
         const props = {
-          "Label Text#9987:546": spec.properties.label || "",
-          "Text Placeholder#10157:2": spec.properties.placeholder || ""
+          // Boolean flags
+          "Has Label#10131:578": spec.properties["Has Label"],
+          "Has Hint Text#10131:580": spec.properties["Has Hint Text"],
+          // Text properties
+          "Dropdown Label#27356:15": spec.properties["Dropdown Label"] || "",
+          "Dropdown Hint#27356:64": spec.properties["Dropdown Hint"] || "",
+          // Variant properties
+          "Size": spec.properties.Size,
+          "Hirerchey": spec.properties.Hirerchey,
+          "Type": spec.properties.Type,
+          "State": spec.properties.State
         };
         console.log('Setting Dropdown properties:', props);
         instance.setProperties(props);
+      } else if (spec.type === "StatCard" && isStatCardProperties(spec.properties)) {
+        const props = {
+          // Use the exact Figma instance property names with their IDs
+          "Stat Label#27356:0": spec.properties["Stat Label"] || "Stat Label",
+          "Stat Value#27356:5": spec.properties["Stat Value"] || "0",
+          "Stat Delta#27356:10": spec.properties["Stat Delta"] || "0%"
+        };
+        console.log('Setting StatCard properties:', props);
+        instance.setProperties(props);
+      } else if (spec.type === "TableColumn" && isTableColumnProperties(spec.properties)) {
+        const props = {
+          "Label#1234:0": spec.properties.label || "",
+          "Value#1234:1": spec.properties.value || ""
+        };
+        console.log('Setting TableColumn properties:', props);
+        instance.setProperties(props);
+      } else if (spec.type === "TableCell" && isTableCellProperties(spec.properties)) {
+        const props: { [key: string]: string | boolean } = {};
+        
+        // Set content based on type and variant
+        if (spec.properties.type === "header") {
+          props["Header Content"] = spec.properties["Header Content"] || "";
+          if (spec.properties["Has Filter"]) {
+            props["Has Filter"] = true;
+          }
+        } else {
+          // Set cell content based on variant
+          switch (spec.properties.variant) {
+            case TableCellVariantValue.Text:
+              props["Cell Content - Text"] = spec.properties["Cell Content - Text"] || "";
+              break;
+            case TableCellVariantValue.Amount:
+              props["Cell Content - Amount"] = spec.properties["Cell Content - Amount"] || "";
+              break;
+            case TableCellVariantValue.Date:
+              props["Cell Content - Date"] = spec.properties["Cell Content - Date"] || "";
+              break;
+            case TableCellVariantValue.Tag:
+              props["Cell Content - Tag"] = spec.properties["Cell Content - Tag"] || "";
+              break;
+            case TableCellVariantValue.User:
+              props["Cell Content - User"] = spec.properties["Cell Content - User"] || "";
+              break;
+          }
+        }
+
+        // Set icon flags
+        if (spec.properties["Has Cell Icon 1"]) props["Has Cell Icon 1"] = true;
+        if (spec.properties["Has Cell Icon 2"]) props["Has Cell Icon 2"] = true;
+        if (spec.properties["Has Cell Icon 3"]) props["Has Cell Icon 3"] = true;
+        if (spec.properties["Has Cell Icon More"]) props["Has Cell Icon More"] = true;
+
+        console.log('Setting TableCell properties:', props);
+        instance.setProperties(props);
+      } else if (spec.type === "Graph") {
+        // Graph component doesn't require any additional properties to be set
+        console.log('Creating Graph component');
+      } else {
+        console.warn('Component does not support setting properties:', spec.type);
       }
     } else {
       console.warn('Component does not support setting properties:', spec.type);
@@ -103,13 +186,34 @@ async function createComponent(parent: FrameNode, spec: ComponentSpec): Promise<
 }
 
 async function createFrameWithComponents(frameSpec: Frame): Promise<FrameNode> {
-  // Create frame
+  // Validate layout type - enforce auto-layout
+  if (!frameSpec.layout.type || frameSpec.layout.type === "NONE") {
+    console.warn(`Invalid layout type: ${frameSpec.layout.type}. Defaulting to VERTICAL auto-layout.`);
+    frameSpec.layout.type = "VERTICAL";
+  }
+
+  // Validate stat card consistency
+  let statCardType: StatCardTypeValue | null = null;
+  const validateStatCards = (components: ComponentSpec[]) => {
+    components.forEach(component => {
+      if (component.type === "StatCard" && isStatCardProperties(component.properties)) {
+        if (statCardType === null) {
+          statCardType = component.properties.Type;
+        } else if (statCardType !== component.properties.Type) {
+          console.warn(`Inconsistent stat card types detected. Converting ${component.properties.Type} to ${statCardType} for consistency.`);
+          component.properties.Type = statCardType;
+        }
+      }
+    });
+  };
+
+  // Create frame with auto-layout
   const frame = figma.createFrame();
   frame.name = frameSpec.name;
   
-  // Set width (ensure minimum of 0.01)
+  // Set width
   const width = Math.max(frameSpec.width, 0.01);
-  frame.resize(width, 0.01); // Initially set minimum height
+  frame.resize(width, frameSpec.height);
   
   // Set background if specified
   if (frameSpec.background) {
@@ -120,27 +224,25 @@ async function createFrameWithComponents(frameSpec: Frame): Promise<FrameNode> {
     }];
   }
 
-  // Set layout properties
-  if (frameSpec.layout.type !== "NONE") {
-    frame.layoutMode = frameSpec.layout.type;
-    frame.primaryAxisAlignItems = frameSpec.layout.alignment.primary;
-    frame.counterAxisAlignItems = frameSpec.layout.alignment.counter;
-    frame.itemSpacing = frameSpec.layout.itemSpacing;
-    
-    // Set padding
-    frame.paddingTop = frameSpec.layout.padding.top;
-    frame.paddingRight = frameSpec.layout.padding.right;
-    frame.paddingBottom = frameSpec.layout.padding.bottom;
-    frame.paddingLeft = frameSpec.layout.padding.left;
-
-    // Set sizing modes
-    frame.primaryAxisSizingMode = frameSpec.height === 0.01 ? "AUTO" : "FIXED";
-    frame.counterAxisSizingMode = frameSpec.width === 0.01 ? "AUTO" : "FIXED";
-  }
+  // Set auto-layout properties
+  frame.layoutMode = frameSpec.layout.type; // Will be either "VERTICAL" or "HORIZONTAL"
+  frame.primaryAxisAlignItems = frameSpec.layout.alignment.primary;
+  frame.counterAxisAlignItems = frameSpec.layout.alignment.counter;
+  frame.itemSpacing = frameSpec.layout.itemSpacing;
+  
+  // Set padding
+  frame.paddingTop = frameSpec.layout.padding.top;
+  frame.paddingRight = frameSpec.layout.padding.right;
+  frame.paddingBottom = frameSpec.layout.padding.bottom;
+  frame.paddingLeft = frameSpec.layout.padding.left;
 
   // Create child frames recursively
   if (frameSpec.children) {
     for (const childSpec of frameSpec.children) {
+      // Ensure child frames use auto-layout
+      if (!childSpec.layout.type || childSpec.layout.type === "NONE") {
+        childSpec.layout.type = "VERTICAL";
+      }
       const childFrame = await createFrameWithComponents(childSpec);
       frame.appendChild(childFrame);
     }
@@ -148,14 +250,57 @@ async function createFrameWithComponents(frameSpec: Frame): Promise<FrameNode> {
 
   // Create components within this frame
   if (frameSpec.components) {
+    let currentTableRow: FrameNode | null = null;
+    
     for (const component of frameSpec.components) {
-      await createComponent(frame, component);
+      if (component.type === "TableCell") {
+        // If this is a table cell and we don't have a current row, create one
+        if (!currentTableRow) {
+          currentTableRow = figma.createFrame();
+          currentTableRow.name = "Table Row";
+          currentTableRow.layoutMode = "HORIZONTAL";
+          currentTableRow.itemSpacing = 0; // No spacing between columns
+          currentTableRow.paddingLeft = 0;
+          currentTableRow.paddingRight = 0;
+          currentTableRow.paddingTop = 0;
+          currentTableRow.paddingBottom = 0;
+          currentTableRow.layoutSizingHorizontal = "HUG";
+          currentTableRow.layoutSizingVertical = "HUG";
+          currentTableRow.layoutAlign = "STRETCH";
+          frame.appendChild(currentTableRow);
+        }
+        
+        // Create the cell in the current row
+        const cellInstance = await createComponent(currentTableRow, component);
+        if (cellInstance) {
+          cellInstance.layoutAlign = "STRETCH";
+        }
+      } else {
+        // If this is not a table cell, reset the current row
+        currentTableRow = null;
+        await createComponent(frame, component);
+      }
     }
   }
 
-  // If height is not auto (0.01), set it to specified height
-  if (frameSpec.height !== 0.01) {
-    frame.resize(frame.width, Math.max(frameSpec.height, frame.height));
+  // After all components are added, set the sizing modes and adjust heights
+  // For the main frame (parent), keep fixed height
+  if (frameSpec.height === 1080) {
+    frame.primaryAxisSizingMode = "FIXED";
+    frame.counterAxisSizingMode = "FIXED";
+    frame.layoutSizingHorizontal = "FIXED";
+    frame.layoutSizingVertical = "FIXED";
+    frame.resize(frame.width, 1080);
+  } else {
+    // For child frames, use HUG content
+    frame.primaryAxisSizingMode = "AUTO";
+    frame.counterAxisSizingMode = "FIXED";
+    frame.layoutSizingHorizontal = "HUG";
+    frame.layoutSizingVertical = "HUG";
+    frame.layoutAlign = "STRETCH";
+    
+    // Force the frame to recalculate its size based on content
+    frame.resize(frame.width, frame.height);
   }
 
   return frame;

@@ -5,7 +5,10 @@ import {
   DropdownsProperties,
   SelectionProperties,
   CursorsProperties,
-  InputFieldsProperties
+  InputFieldsProperties,
+  StatCardProperties,
+  TableColumnProperties,
+  TableCellProperties
 } from './types';
 
 // Type guard functions
@@ -18,7 +21,8 @@ export function isBreadcrumbsProperties(props: CustomComponentProperties): props
 }
 
 export function isDropdownsProperties(props: CustomComponentProperties): props is DropdownsProperties {
-  return 'State Visibility' in props && 'Label Visibility' in props && 'Stacking Direction' in props;
+  return 'Size' in props && 'Hirerchey' in props && 'Type' in props && 'State' in props &&
+         'Has Label' in props && 'Has Hint Text' in props && 'Dropdown Label' in props && 'Dropdown Hint' in props;
 }
 
 export function isSelectionProperties(props: CustomComponentProperties): props is SelectionProperties {
@@ -31,4 +35,23 @@ export function isCursorsProperties(props: CustomComponentProperties): props is 
 
 export function isInputFieldsProperties(props: CustomComponentProperties): props is InputFieldsProperties {
   return 'size' in props && 'variant' in props && 'type' in props && 'state' in props && 'labelInfo' in props;
+}
+
+export function isStatCardProperties(props: CustomComponentProperties): props is StatCardProperties {
+  return 'Type' in props && 'State' in props;
+}
+
+export function isTableColumnProperties(props: CustomComponentProperties): props is TableColumnProperties {
+  return 'Position' in props && 'Variant' in props;
+}
+
+export function isTableCellProperties(props: any): props is TableCellProperties {
+  return (
+    props &&
+    typeof props === 'object' &&
+    'type' in props &&
+    'position' in props &&
+    'variant' in props &&
+    'state' in props
+  );
 } 

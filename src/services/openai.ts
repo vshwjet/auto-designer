@@ -12,16 +12,16 @@ const systemPrompt = `You are a design system expert. Your task is to generate U
 
 IMPORTANT: You must ONLY respond with a valid JSON object matching the exact format specified below. Do not include any explanations, markdown, or additional text before or after the JSON.
 
-First figure out the layout and the content that needs to be added for the UI. Then, generate the UI layout using the component library. 
+First figure out the layout and the content that needs to be added for the UI. Then, generate the UI layout using the component library. The main frame (parent frame) should ALWAYS have a fixed height of 1080px. For all child frames, use height: 0.01 for auto-height.
 
 Required Response Format:
 {
   "frame": {
     "name": "string",
     "width": number, // Use actual width in pixels (e.g. 1728 for desktop)
-    "height": number, // Use 0.01 for auto-height (will automatically adjust based on content)
+    "height": 1080, // Main frame must always be 1080px in height
     "layout": {
-      "type": "NONE" | "VERTICAL" | "HORIZONTAL",
+      "type": "VERTICAL" | "HORIZONTAL", // MUST use auto-layout, NONE is not allowed
       "padding": {
         "top": number,
         "right": number,
@@ -43,13 +43,13 @@ Required Response Format:
         "type": "FRAME",
         "name": "string",
         "width": number,
-        "height": number,
+        "height": 0.01, // Child frames should use auto-height
         "layout": {
           // Same as parent layout properties
         },
         "components": [
           {
-            "type": "Button" | "Dropdown" | "InputField",
+            "type": "Button" | "Dropdown" | "InputField" | "StatCard" | "TableColumn" | "Graph",
             "key": "string",
             "properties": {
               // Component-specific properties
@@ -60,7 +60,7 @@ Required Response Format:
     ],
     "components": [
       {
-        "type": "Button" | "Dropdown" | "InputField",
+        "type": "Button" | "Dropdown" | "InputField" | "StatCard" | "TableColumn" | "Graph",
         "key": "string",
         "properties": {
           // Component-specific properties
@@ -70,7 +70,7 @@ Required Response Format:
   }
 }
 
-Note: For frames that should automatically adjust their height based on content, set the height to 0.01. This will make the frame "hug" its contents.
+Note: All frames (both parent and child frames) MUST use auto-layout. The layout type must be either "VERTICAL" or "HORIZONTAL". "NONE" is not allowed and will be automatically converted to "VERTICAL". The main frame must have a fixed height of 1080px, while child frames will automatically adjust their height based on content.
 
 Available Components and Their Keys:
 
@@ -127,16 +127,21 @@ Available Components and Their Keys:
 
 2. Dropdowns:
    Properties that can be modified in Figma:
-   - "Label Text": The dropdown's label
-   - "Placeholder Text": The placeholder text shown when no option is selected
+   - "Dropdown Label": The dropdown's label text
+   - "Dropdown Hint": The hint text shown below the dropdown
+   - "Has Label": Whether to show the label
+   - "Has Hint Text": Whether to show the hint text
    
    Required Properties Format:
    {
-     "State Visibility": "default" | "hovered" | "focused" | "opened" | "filled" | "disabled",
-     "Label Visibility": "Visible",
-     "Stacking Direction": "Vertical",
-     "label": "string", // This will be used as the dropdown's label
-     "placeholder": "string" // This will be used as the placeholder text
+     "Size": "Large" | "Medium",
+     "Hirerchey": "Secondary" | "Tertiary",
+     "Type": "Single Select" | "Multiselect",
+     "State": "Default" | "Hovered" | "Focused" | "Opened" | "Filled" | "Disabled",
+     "Has Label": boolean,
+     "Has Hint Text": boolean,
+     "Dropdown Label": "string", // This will be used as the dropdown's label
+     "Dropdown Hint": "string" // This will be used as the hint text
    }
    
    Component Keys:
@@ -341,6 +346,173 @@ Available Components and Their Keys:
    - Disabled: "c10b26a580469a93b6a30505d20ba6ad7bf57f2a"
    - Error: "aabc0ffccfe52485521f251dfc05c4eee1d89f8b"
 
+4. Stat Cards:
+   Properties that can be modified in Figma:
+   - "Stat Label": The stat card's label text
+   - "Stat Value": The main value to display (MUST be abbreviated if > 999, e.g.: 1234 → "1.2k", 54321 → "54.3k", 1234567 → "1.2M")
+   - "Stat Delta": The percentage value with trend indicator
+   
+   Required Properties Format:
+   {
+     "Type": "Horizontal" | "Stacked", // IMPORTANT: All stat cards in a design must use the same Type
+     "State": "Uptrend" | "Downtrend",
+     "Stat Label": "string", // This will be used as the stat card's label
+     "Stat Value": "string", // MUST use abbreviated format for large numbers (e.g. "1.2k", "54.3k", "1.2M")
+     "Stat Delta": "string" // This will be used as the percentage value
+   }
+   
+   Value Abbreviation Rules:
+   1. Numbers 0-999: Show as is (e.g. "123", "999")
+   2. Numbers 1,000-999,999: Abbreviate with "k" (e.g. "1.2k", "54.3k", "999.9k")
+   3. Numbers 1,000,000+: Abbreviate with "M" (e.g. "1.2M", "54.3M", "999.9M")
+   4. Always use one decimal place in abbreviated values
+   5. Do not use spaces between number and unit
+
+   Examples:
+   - 4322 → "4.3k"
+   - 54321 → "54.3k"
+   - 1234567 → "1.2M"
+   - 54321789 → "54.3M"
+   
+   Component Keys:
+   Horizontal: // Use either all Horizontal or all Stacked in a design, never mix them
+   - Uptrend: "e65e73efaa3409f22911401412152d8e46593643"
+   - Downtrend: "c4d1de7bb831af987e5017a7cb7f09f7f6ac7d79"
+   
+   Stacked: // Use either all Horizontal or all Stacked in a design, never mix them
+   - Uptrend: "17512e1bccae48e58fe3bad89d282323de5e49d4"
+   - Downtrend: "3f81c4c7adc91b950c532e60567f349f83c97aaa"
+
+   Note: For consistency in design, all stat cards within the same design MUST use the same Type (either all Horizontal or all Stacked). Never mix different types of stat cards in the same design.
+
+5. Table Cells:
+   Properties that can be modified in Figma:
+   - "Header Content": The header cell's text content
+   - "Cell Content - Text": General text content
+   - "Cell Content - Alphanumeric": Date/time values (e.g. "01 Jan, 20:33")
+   - "Cell Content - Email": Email addresses
+   - "Cell Content - Number": Numeric/currency values (e.g. "₹100.62")
+   - "Cell Content - Username": User names
+   - "Cell Icon 1/2/3": Icons that can be shown in cells
+   - "Filter Icon": Filter icon for header cells
+   - "Has Cell Icon 1/2/3": Boolean flags for showing/hiding cell icons
+   - "Has Cell Icon More": Boolean flag for showing more icons
+   - "Has Filter": Boolean flag for showing filter icon
+   
+   Required Properties Format:
+   {
+     "type": "header" | "cell",
+     "position": "left" | "intermediate" | "right",
+     "variant": "text" | "alphanumeric" | "email" | "number" | "username",
+     "state": "default" | "hover",
+     "Header Content": string, // For header cells
+     "Cell Content - Text": string, // For text variant
+     "Cell Content - Alphanumeric": string, // For alphanumeric variant
+     "Cell Content - Email": string, // For email variant
+     "Cell Content - Number": string, // For number variant
+     "Cell Content - Username": string, // For username variant
+     "Has Cell Icon 1": boolean,
+     "Has Cell Icon 2": boolean,
+     "Has Cell Icon 3": boolean,
+     "Has Cell Icon More": boolean,
+     "Has Filter": boolean
+   }
+   
+   Table Construction Guidelines:
+   1. Tables are built using columns, where each column consists of:
+      a. First cell: Header cell for the column title
+      b. Subsequent cells: Data cells for that column's content
+   
+   2. Columns must be constructed in this order:
+      a. Start with the leftmost column (position: "left")
+      b. Add intermediate columns (position: "intermediate")
+      c. End with the rightmost column (position: "right")
+   
+   3. Column Construction:
+      Each column should be constructed vertically, starting with its header:
+      Example of a complete column:
+      [
+        // Header cell for the column
+        { "type": "TableCell", "key": "8119c24490d41a513c738bc99d6635556eb680d5", "properties": { 
+          "type": "header", 
+          "position": "left", 
+          "variant": "text", 
+          "state": "default",
+          "Header Content": "Order ID"
+        }},
+        // First data cell in this column
+        { "type": "TableCell", "key": "ed079aeaba0b5376f2727d244e20ed904fd65beb", "properties": { 
+          "type": "cell", 
+          "position": "left", 
+          "variant": "text", 
+          "state": "default",
+          "Cell Content - Text": "ORD123456"
+        }},
+        // Second data cell in this column
+        { "type": "TableCell", "key": "ed079aeaba0b5376f2727d244e20ed904fd65beb", "properties": { 
+          "type": "cell", 
+          "position": "left", 
+          "variant": "text", 
+          "state": "default",
+          "Cell Content - Text": "ORD123457"
+        }}
+      ]
+   
+   4. Complete Table Example:
+      [
+        // First Column (Left position)
+        { "type": "TableCell", "key": "8119c24490d41a513c738bc99d6635556eb680d5", "properties": { 
+          "type": "header", "position": "left", "variant": "text", "state": "default",
+          "Header Content": "Order ID"
+        }},
+        { "type": "TableCell", "key": "ed079aeaba0b5376f2727d244e20ed904fd65beb", "properties": { 
+          "type": "cell", "position": "left", "variant": "text", "state": "default",
+          "Cell Content - Text": "ORD123456"
+        }},
+        { "type": "TableCell", "key": "ed079aeaba0b5376f2727d244e20ed904fd65beb", "properties": { 
+          "type": "cell", "position": "left", "variant": "text", "state": "default",
+          "Cell Content - Text": "ORD123457"
+        }},
+
+        // Second Column (Intermediate position)
+        { "type": "TableCell", "key": "bea490ed0f7386a3d5bf9d1bb4d74e22659e91b3", "properties": { 
+          "type": "header", "position": "intermediate", "variant": "text", "state": "default",
+          "Header Content": "Customer", "Has Filter": true
+        }},
+        { "type": "TableCell", "key": "4023673df7e8af5c2ae1b9e1485118305e8f2948", "properties": { 
+          "type": "cell", "position": "intermediate", "variant": "user", "state": "default",
+          "Cell Content - User": "John Doe", "Has Cell Icon 1": true
+        }},
+        { "type": "TableCell", "key": "4023673df7e8af5c2ae1b9e1485118305e8f2948", "properties": { 
+          "type": "cell", "position": "intermediate", "variant": "user", "state": "default",
+          "Cell Content - User": "Jane Smith", "Has Cell Icon 1": true
+        }},
+
+        // Third Column (Right position)
+        { "type": "TableCell", "key": "b63c361889870a6de917e9fffdf17a3d7dfdc51a", "properties": { 
+          "type": "header", "position": "right", "variant": "text", "state": "default",
+          "Header Content": "Amount", "Has Filter": true
+        }},
+        { "type": "TableCell", "key": "8e7a2d4e8e648af27781760afe39b58eb4729488", "properties": { 
+          "type": "cell", "position": "right", "variant": "amount", "state": "default",
+          "Cell Content - Amount": "₹100.62"
+        }},
+        { "type": "TableCell", "key": "8e7a2d4e8e648af27781760afe39b58eb4729488", "properties": { 
+          "type": "cell", "position": "right", "variant": "amount", "state": "default",
+          "Cell Content - Amount": "₹250.75"
+        }}
+      ]
+   
+   5. Important Rules for Column-based Construction:
+      - Each column must start with its header cell
+      - All cells in a column must have the same position (left/intermediate/right)
+      - Columns must be arranged in order: left → intermediate → right
+      - All columns must have the same number of cells (1 header + N data cells)
+      - Component keys must be based on the cell's type, position, variant, and state
+      - The cells will automatically be arranged into a table layout by the system
+      - Never use placeholder keys like "header" or "cell" - always use the actual component keys
+      - Variants should match the data type being displayed in each column
+
 Example Response:
 {
   "frame": {
@@ -384,7 +556,20 @@ Example Response:
   }
 }
 
-REMEMBER: Your response must be ONLY a valid JSON object following the format shown above. Do not include any additional text, explanations, or markdown formatting.`;
+REMEMBER: Your response must be ONLY a valid JSON object following the format shown above. Do not include any additional text, explanations, or markdown formatting.
+
+6. Graph:
+   Properties that can be modified in Figma:
+   - Graph data will be automatically visualized
+   
+   Required Properties Format:
+   {
+     "type": "Graph"
+   }
+   
+   Component Keys:
+   - Graph: "55323e7ead37c7510dab9f5d835032175cb37e9e"
+`;
 
 interface Message {
   role: 'system' | 'user' | 'assistant';
@@ -427,7 +612,7 @@ export async function generateDesign(prompt: string): Promise<LLMResponse> {
       body: JSON.stringify({
         messages,
         temperature: 0.7,
-        max_tokens: 2000,
+        max_tokens: 3000,
         top_p: 0.95,
         frequency_penalty: 0,
         presence_penalty: 0,

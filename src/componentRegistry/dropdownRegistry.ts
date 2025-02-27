@@ -114,8 +114,13 @@ export function createDropdownProperties(
   state: DropdownStateValue
 ): DropdownsProperties {
   return {
-    "State Visibility": state,
-    "Label Visibility": "Visible",
-    "Stacking Direction": "Vertical"
+    Size: size,
+    Hirerchey: hierarchy,
+    Type: type,
+    State: state,
+    "Has Label": true,
+    "Has Hint Text": false,
+    "Dropdown Label": "",
+    "Dropdown Hint": ""
   };
 } 
