@@ -1,4 +1,4 @@
-import { LLMResponse } from '../types';
+import { LLMResponse, Frame } from '../types';
 
 // Azure OpenAI configuration from environment variables
 const config = {
@@ -8,11 +8,72 @@ const config = {
   apiVersion: process.env.AZURE_OPENAI_API_VERSION as string
 };
 
-const systemPrompt = `You are a design system expert. Your task is to generate UI layouts using our component library.
+const systemPrompt = `You are an AI design assistant that helps create and modify Figma designs. Your task is to generate or update design specifications based on user prompts.
 
-IMPORTANT: You must ONLY respond with a valid JSON object matching the exact format specified below. Do not include any explanations, markdown, or additional text before or after the JSON.
+When handling design updates:
+1. STATE PRESERVATION:
+   - Preserve existing component states and properties unless explicitly requested to change
+   - Maintain component IDs and references when modifying existing components
+   - Keep unmodified components exactly as they are in the current state
+
+2. LAYOUT CONSISTENCY:
+   - Maintain the existing layout structure unless changes are specifically requested
+   - Preserve parent-child relationships between frames and components
+   - Keep padding, spacing, and alignment values consistent with the current design
+   - Ensure new components follow the established grid and layout patterns
+
+3. DESIGN CONTEXT:
+   - Consider the entire design context when making changes
+   - Maintain visual hierarchy and component relationships
+   - Preserve the design system's rules and constraints
+   - Keep consistent styling (colors, typography, spacing) across components
+
+4. INCREMENTAL CHANGES:
+   - Make only the requested changes while preserving all other aspects
+   - Validate that changes don't break existing functionality
+   - Ensure new components are compatible with existing ones
+   - Maintain consistency in component variants and states
+
+5. COMPONENT RELATIONSHIPS:
+   - Preserve logical groupings of components
+   - Maintain interactive relationships between components
+   - Keep related components (e.g., label-input pairs) together
+   - Ensure proper nesting of components within frames
+
+Output Format:
+CRITICAL: Your response must be a raw JSON object WITHOUT any JSON formatting markers or code block syntax.
+DO NOT include \`\`\`json, {, } or any other markdown or code formatting.
+The response should start directly with the frame property and its value.
+
+Example of INCORRECT response:
+\`\`\`json
+{
+  "frame": {
+    // frame contents
+  }
+}
+\`\`\`
+
+Example of CORRECT response:
+"frame": {
+  "name": "Contact Form",
+  "width": 1728,
+  // rest of the frame properties
+}
+
+The frame should maintain the exact structure of unmodified sections while incorporating the requested changes.
 
 First figure out the layout and the content that needs to be added for the UI. Then, generate the UI layout using the component library. The main frame (parent frame) should ALWAYS have a fixed height of 1080px. For all child frames, use height: 0.01 for auto-height.
+
+All the Input fields in UI should be of the same type, unless specified otherwise.
+
+When determining padding values:
+   - Choose same padding values for all the child frames
+   - Use CONSISTENT padding values across parent and child frames
+   - Once you choose padding values for a design, maintain them for all updates
+   - Consider the content density and hierarchy when selecting padding
+   - Document your padding choices in the frame names for clarity
+
 
 Required Response Format:
 {
@@ -595,11 +656,29 @@ interface OpenAIResponse {
   };
 }
 
-export async function generateDesign(prompt: string): Promise<LLMResponse> {
+export async function generateDesign(prompt: string, currentState?: Frame): Promise<LLMResponse> {
   const messages: Message[] = [
-    { role: 'system', content: systemPrompt },
-    { role: 'user', content: prompt }
+    { role: 'system', content: systemPrompt }
   ];
+
+  // If we have a current state, include it in the context
+  if (currentState) {
+    messages.push({
+      role: 'assistant',
+      content: JSON.stringify({
+        frame: currentState
+      }, null, 2)
+    });
+    
+    // Add the incremental update instruction
+    messages.push({
+      role: 'system',
+      content: 'Above is the current design state. Please modify it according to the user\'s request while preserving the rest of the design. Return the complete updated design.'
+    });
+  }
+
+  // Add the user's prompt
+  messages.push({ role: 'user', content: prompt });
 
   try {
     const apiUrl = `${config.endpoint}/openai/deployments/${config.deploymentName}/chat/completions?api-version=${config.apiVersion}`;
@@ -639,7 +718,12 @@ export async function generateDesign(prompt: string): Promise<LLMResponse> {
     });
     
     try {
-      return JSON.parse(content) as LLMResponse;
+      // Clean up the response if needed
+      const cleanedContent = content.trim();
+      // Wrap the response in curly braces if it starts with "frame":
+      const jsonContent = cleanedContent.startsWith('"frame"') ? `{${cleanedContent}}` : cleanedContent;
+      
+      return JSON.parse(jsonContent) as LLMResponse;
     } catch (error) {
       console.error('Failed to parse LLM response:', error);
       throw new Error('Invalid response format from LLM');

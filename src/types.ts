@@ -346,8 +346,16 @@ export interface LLMResponse {
 }
 
 export interface PluginMessage {
-  type: 'generate-design' | 'cancel';
+  type: 'generate-design' | 'update-design' | 'cancel';
   prompt?: string;
+  isIncremental?: boolean;
+}
+
+export interface DesignState {
+  currentFrame: Frame | null;
+  frameNode: FrameNode | null;
+  history: Frame[];
+  historyIndex: number;
 }
 
 export interface ComponentRegistry<T> {
