@@ -8,7 +8,8 @@ import {
   InputFieldsProperties,
   StatCardProperties,
   TableColumnProperties,
-  TableCellProperties
+  TableCellProperties,
+  TagProperties
 } from './types';
 
 // Type guard functions
@@ -53,5 +54,15 @@ export function isTableCellProperties(props: any): props is TableCellProperties 
     'position' in props &&
     'variant' in props &&
     'state' in props
+  );
+}
+
+// Add these types and function
+export function isTagProperties(props: CustomComponentProperties): props is TagProperties {
+  return (
+    'Size' in props &&
+    'Color' in props &&
+    'Variant' in props &&
+    'Type' in props
   );
 } 

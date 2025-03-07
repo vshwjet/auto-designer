@@ -285,6 +285,14 @@ export interface GraphProperties {
   type: "Graph";
 }
 
+export interface TagProperties {
+  Size: "sm" | "md" | "lg";
+  Color: "Primary" | "Error" | "Warning" | "Success" | "Gray" | "Light Gray" | "Yellow" | "Magenta" | "Teal" | "Cyan";
+  Variant: "Subtle" | "Attentive" | "Outline";
+  Type: "Pill" | "Round";
+  text?: string;
+}
+
 export type CustomComponentProperties = 
   | ButtonProperties 
   | BreadcrumbsProperties 
@@ -295,11 +303,12 @@ export type CustomComponentProperties =
   | StatCardProperties
   | TableColumnProperties
   | TableCellProperties
-  | GraphProperties;
+  | GraphProperties
+  | TagProperties;
 
 // Component Specs
 export interface ComponentSpec {
-  type: "Button" | "Dropdown" | "InputField" | "StatCard" | "TableColumn" | "TableCell" | "Graph";
+  type: "Button" | "Dropdown" | "InputField" | "StatCard" | "TableColumn" | "TableCell" | "Graph" | "Tag";
   key: string;
   properties: CustomComponentProperties;
 }
