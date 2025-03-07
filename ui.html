@@ -118,47 +118,42 @@
   <div class="container">
     <h3>AI Design Assistant</h3>
     
-    <div class="form-group">
+    <form id="designForm" class="form-group">
       <label for="prompt">Design Prompt</label>
-      <textarea id="prompt" placeholder="Describe the design you want to generate..."></textarea>
-    </div>
+      <textarea id="prompt" placeholder="Describe the design you want to generate..." autofocus></textarea>
 
-    <div class="toggle-container">
-      <label class="toggle-switch">
-        <input type="checkbox" id="updateModeToggle">
-        <span class="toggle-slider"></span>
-      </label>
-      <span class="toggle-label">Update existing design</span>
-    </div>
-
-    <button id="generateBtn">Generate New Design</button>
-    <div id="status"></div>
+      <button type="submit" id="generateBtn">Generate Design</button>
+      <div id="status"></div>
+    </form>
   </div>
 
   <script>
+    const form = document.getElementById('designForm');
     const generateBtn = document.getElementById('generateBtn');
-    const updateModeToggle = document.getElementById('updateModeToggle');
+    const promptInput = document.getElementById('prompt');
 
-    // Update button text based on toggle state
-    updateModeToggle.onchange = () => {
-      generateBtn.textContent = updateModeToggle.checked ? 'Update Design' : 'Generate New Design';
-    };
+    // Add event listener for keydown on the textarea
+    promptInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        form.dispatchEvent(new Event('submit'));
+      }
+    });
 
-    generateBtn.onclick = () => {
+    form.onsubmit = (e) => {
+      e.preventDefault();
       const prompt = document.getElementById('prompt').value;
       if (!prompt) {
         document.getElementById('status').textContent = 'Please enter a design prompt';
         return;
       }
 
-      const isUpdateMode = updateModeToggle.checked;
-      document.getElementById('status').textContent = isUpdateMode ? 'Updating design...' : 'Generating design...';
+      document.getElementById('status').textContent = 'Generating design...';
       
       parent.postMessage({ 
         pluginMessage: { 
-          type: isUpdateMode ? 'update-design' : 'generate-design',
-          prompt,
-          isIncremental: isUpdateMode
+          type: 'generate-design',
+          prompt
         } 
       }, '*');
     };

@@ -7,10 +7,36 @@
     "dotenv": "^16.4.5"
   },
   "devDependencies": {
+    "@eslint/js": "^9.21.0",
     "@figma/plugin-typings": "^1.82.0",
+    "eslint": "^9.21.0",
+    "globals": "^16.0.0",
+    "ts-loader": "^9.5.1",
     "typescript": "^5.7.3",
+    "typescript-eslint": "^8.26.0",
     "webpack": "^5.97.1",
-    "webpack-cli": "^6.0.1",
-    "ts-loader": "^9.5.1"
+    "webpack-cli": "^6.0.1"
+  },
+  "eslintConfig": {
+    "extends": [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended",
+      "plugin:@figma/figma-plugins/recommended"
+    ],
+    "parser": "@typescript-eslint/parser",
+    "parserOptions": {
+      "project": "./tsconfig.json"
+    },
+    "root": true,
+    "rules": {
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_",
+          "caughtErrorsIgnorePattern": "^_"
+        }
+      ]
+    }
   }
 }
