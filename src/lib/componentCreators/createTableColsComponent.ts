@@ -1,67 +1,72 @@
-import { TableCellVariantValue } from '../../types';
+import { populate } from "dotenv";
+import { Frame } from "../../types";
+import { listComponentProperties } from "../utils";
 
-export async function createTableColComponent(instance: InstanceNode, properties: any) {
-  // console.log("--------CREATING TABLE COL--------")
-  // console.log(properties, instance.name)
-  // const props: { [key: string]: string | boolean } = {};
-  
-  // if (properties.type === "header") {
-  //   props["Header Content"] = properties["Header Content"] || "";
-  //   if (properties["Has Filter"]) {
-  //     props["Has Filter"] = true;
-  //   }
-  // } else {
-  //   switch (properties.variant) {
-  //     case TableCellVariantValue.Text:
-  //       props["Cell Content - Text"] = properties["Cell Content - Text"] || "";
-  //       break;
-  //     case TableCellVariantValue.Amount:
-  //       props["Cell Content - Amount"] = properties["Cell Content - Amount"] || "";
-  //       break;
-  //     case TableCellVariantValue.Date:
-  //       props["Cell Content - Date"] = properties["Cell Content - Date"] || "";
-  //       break;
-  //     case TableCellVariantValue.Tag:
-  //       props["Cell Content - Tag"] = properties["Cell Content - Tag"] || "";
-  //       break;
-  //     case TableCellVariantValue.User:
-  //       props["Cell Content - User"] = properties["Cell Content - User"] || "";
-  //       break;
-  //   }
-  // }
+export async function createTableColComponent(frame: Frame) {
+  const tableFrame = figma.createFrame();
+  tableFrame.name = "Table";
+  tableFrame.layoutMode = "HORIZONTAL";
+  tableFrame.primaryAxisSizingMode = "AUTO";
+  tableFrame.counterAxisSizingMode = "AUTO";
+  tableFrame.itemSpacing = 0;
 
-  // if (properties["Has Cell Icon 1"]) props["Has Cell Icon 1"] = true;
-  // if (properties["Has Cell Icon 2"]) props["Has Cell Icon 2"] = true;
-  // if (properties["Has Cell Icon 3"]) props["Has Cell Icon 3"] = true;
-  // if (properties["Has Cell Icon More"]) props["Has Cell Icon More"] = true;
+  // Iterate through each column in cells
+  for (const column of frame.cells) {
+    // Create a column frame with vertical layout
+    const columnFrame = figma.createFrame();
+    columnFrame.name = "Column";
+    columnFrame.layoutMode = "VERTICAL";
+    columnFrame.primaryAxisSizingMode = "AUTO";
+    columnFrame.counterAxisSizingMode = "AUTO";
+    columnFrame.itemSpacing = 0;
 
-  // instance.setProperties(props);
-  // console.log("--------TABLE CELL CREATED--------")
-
-  //--------------------------------
-  console.log("--------CREATING TABLE COL--------")
-  const props: { [key: string]: string | boolean } = {};
-
-  if(instance.children && instance.children.length > 0){
-    for(const child of instance.children){
-      console.log("Found a child - table", child.name)
-      if(child.type.toLocaleLowerCase() === "tablecell"){
-        await createTableCellComponent(child);
+    // Create cells within the column
+    for (const cell of column) {
+      const cellFrame = await createTableCell(cell);
+      if (cellFrame) {
+        columnFrame.appendChild(cellFrame);
       }
     }
+
+    tableFrame.appendChild(columnFrame);
   }
 
-  instance.setProperties(props);
-  console.log("--------TABLE COL CREATED--------")
-
-} 
-
-export async function createDataTableComponent(instance: InstanceNode, properties: any) {
-  console.log("--------CREATING TABLE COLS--------")
-  console.log(properties, instance.name)
+  return tableFrame;
 }
 
-export async function createTableCellComponent(instance: any) {
-  console.log("--------CREATING TABLE CELL--------")
-  console.log(instance)
+async function createTableCell(cell: any) {
+  const component = await figma.importComponentByKeyAsync(cell.key);
+  if (!component) {
+    console.error(`Component not found for key: ${cell.key}`);
+    return null;
+  }
+  const instance = component.createInstance();
+  listComponentProperties(instance);
+
+  const props = cell.properties;
+  const cellType = props.type || "header";
+
+  if(cellType === "header") {
+    console.log(props);
+  }
+
+  const mappedProps: { [key: string]: string | boolean } = {
+    "type": cellType,
+    "variant": props["variant"]?.value || "text",
+    "state": props["state"]?.value || "default",
+    "position": props.position || "left",
+  };
+
+  // Add the appropriate content property based on cell type
+  if (cellType === "cell") {
+    mappedProps["Cell Content - Text#10157:224"] = props["Cell Content - Text"] || "";
+  } else if (cellType === "header") {
+    mappedProps["Header Content#10157:166"] = props["Header Content"] || "";
+  }
+
+  console.log(mappedProps);
+
+  instance.setProperties(mappedProps);
+  return instance;
 }
+

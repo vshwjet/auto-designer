@@ -488,6 +488,160 @@ Available Components and Their Keys:
 
       
       Required response type for a Data Table component: 
+while responding for a data table, 
+along with the other details, include the following: 
+
+cells: [[], [], []] -- an array of arrays, each array representing a column in the table. 
+Each array will contain objects, each object representing a cell in the particular column.
+ 
+So, for example, if the table has 3 columns, and 2 rows, you will have 2 arrays, each containing 3 objects. 
+
+each cell will have the following properties: 
+
+{
+  "key": string, the unique key for the cell based on the properties of the cell, eg type, variant, state, etc. 
+   "properties": {
+    "type": "header",
+        "variant": "text",
+        "state": "default",
+        "position": "left",
+        "Has Filter": false,
+        "Header Content": "Header 1"
+    }
+}
+
+
+for example, if you are creating a table with 3 cols and 3 rows in each column, you will have 3 arrays, each containing 3 objects. 
+
+"frame": {
+  "name": "Data Table",
+  "width": 1728,
+  "height": 1080,
+  "layout": {
+    "type": "VERTICAL",
+    "padding": {
+      "top": 24,
+      "right": 24,
+      "bottom": 24,
+      "left": 24
+    },
+    "itemSpacing": 16,
+    "alignment": {
+      "primary": "MIN",
+      "counter": "MIN"
+    }
+  },
+  "background": {
+    "color": {
+      "r": 1,
+      "g": 1,
+      "b": 1
+    },
+    "opacity": 1
+  },
+  "cells": [
+                [
+                    {
+                        "key": "8119c24490d41a513c738bc99d6635556eb680d5",
+                        "properties": {
+                            "type": "header",
+                            "variant": "text",
+                            "state": "default",
+                            "position": "left",
+                            "Has Filter": false,
+                            "Header Content": "Header 1"
+                        }
+                    },
+                    {
+                        "key": "ed079aeaba0b5376f2727d244e20ed904fd65beb",
+                        "properties": {
+                            "type": "cell",
+                            "variant": "text",
+                            "state": "default",
+                            "position": "left",
+                            "Cell Content - Text": "Row 1"
+                        }
+                    },
+                    {
+                        "key": "ed079aeaba0b5376f2727d244e20ed904fd65beb",
+                            "properties": {
+                            "type": "cell",
+                            "variant": "text",
+                            "state": "default",
+                            "position": "left",
+                            "Cell Content - Text": "Row 2"
+                        }
+                    }
+                ],
+                [
+                    {
+                        "key": "bea490ed0f7386a3d5bf9d1bb4d74e22659e91b3",
+                        "properties": {
+                            "type": "header",
+                            "variant": "text",
+                            "state": "default",
+                            "position": "intermediate",
+                            "Has Filter": false,
+                            "Header Content": "Header 2"
+                        }
+                    },
+                    {
+                        "key": "50dc229f2f4ccbb58a97dbb6d7e7cba68cd43dd5",
+                        "properties": {
+                            "type": "cell",
+                            "variant": "text",
+                            "state": "default",
+                            "position": "intermediate",
+                            "Cell Content - Text": "Row 1"
+                        }
+                    },
+                    {
+                        "key": "50dc229f2f4ccbb58a97dbb6d7e7cba68cd43dd5",
+                        "properties": {
+                            "type": "cell",
+                            "variant": "text",
+                            "state": "default",
+                            "position": "intermediate",
+                            "Cell Content - Text": "Row 2"
+                        }
+                    }
+                ],
+                [
+                    {
+                        "key": "b63c361889870a6de917e9fffdf17a3d7dfdc51a",
+                        "properties": {
+                            "type": "header",
+                            "variant": "text",
+                            "state": "default",
+                            "position": "right",
+                            "Has Filter": false,
+                            "Header Content": "Header 3"
+                        }
+                    },
+                    {
+                        "key": "ba1d6a04b098e36b2e1ad8a86b48c024c8f4bfc4",
+                        "properties": {
+                            "type": "cell",
+                            "variant": "text",
+                            "state": "default",
+                            "position": "right",
+                            "Cell Content - Text": "Row 1"
+                        }
+                    },
+                    {
+                        "key": "ba1d6a04b098e36b2e1ad8a86b48c024c8f4bfc4",
+                        "properties": {
+                            "type": "cell",
+                            "variant": "text",
+                            "state": "default",
+                            "position": "right",
+                            "Cell Content - Text": "Row 2"
+                        }
+                    }
+                ]
+            ]
+}
+
 
 
     Use this as the componentKeys and details for the Table Columns:

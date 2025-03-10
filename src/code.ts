@@ -24,6 +24,7 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
         figma.notify('Generating design...');
 
         const designSpec = await generateDesign(msg.prompt);
+
         const frame = await createFrameWithComponents(designSpec.frame);
 
         const viewport = figma.viewport.center;

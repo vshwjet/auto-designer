@@ -1,4 +1,4 @@
-import { createButtonComponent, createDataTableComponent, createDropdownComponent, createInputFieldComponent, createStatCardComponent, createTableCellComponent, createTableColComponent, createTagComponent } from "./componentCreators";
+import { createButtonComponent, createDropdownComponent, createInputFieldComponent, createStatCardComponent, createTableColComponent, createTagComponent } from "./componentCreators";
 import { listComponentProperties, loadInterFonts } from "./utils";
 
 const createComponent = async (parent: FrameNode, spec: any): Promise<InstanceNode | null> => {
@@ -34,12 +34,7 @@ const createComponent = async (parent: FrameNode, spec: any): Promise<InstanceNo
       case "StatCard":
         await createStatCardComponent(instance, spec.properties);
         break;
-      case "Data Table":
-        await createDataTableComponent(instance, spec.properties);
-        break;
-      case "TableColumn":
-        await createTableColComponent(instance, spec.properties);
-        break;
+
       // case "TableCell":
       //   await createTableCellComponent(instance);
       //   break;

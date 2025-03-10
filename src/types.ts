@@ -348,6 +348,7 @@ export interface Frame {
   };
   children?: Frame[];
   components?: ComponentSpec[];
+  cells?: any;
 }
 
 export interface LLMResponse {
