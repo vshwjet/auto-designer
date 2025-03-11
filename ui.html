@@ -144,8 +144,9 @@
       e.preventDefault();
       const prompt = document.getElementById('prompt').value;
       if (!prompt) {
-        document.getElementById('status').textContent = 'Please enter a design prompt';
-        return;
+        prompt = "create a dashboard with metrics such as success rate, mrr and also add global filters also add a table relevant to payments data"
+        // document.getElementById('status').textContent = 'Please enter a design prompt';
+        // return;
       }
 
       document.getElementById('status').textContent = 'Generating design...';

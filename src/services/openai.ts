@@ -30,7 +30,7 @@ interface OpenAIResponse {
   };
 }
 
-export async function generateDesign(prompt: string, currentState?: Frame): Promise<LLMResponse> {
+export async function generateDesign(prompt: string, currentState?: Frame) {
   const messages: Message[] = [
     { role: 'system', content: systemPrompt }
   ];
@@ -50,12 +50,10 @@ export async function generateDesign(prompt: string, currentState?: Frame): Prom
     });
   }
 
-  // Add the user's prompt
   messages.push({ role: 'user', content: prompt });
 
   try {
     const apiUrl = `${config.endpoint}/openai/deployments/${config.deploymentName}/chat/completions?api-version=${config.apiVersion}`;
-    // console.log('Making request to:', apiUrl);
 
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -66,7 +64,7 @@ export async function generateDesign(prompt: string, currentState?: Frame): Prom
       body: JSON.stringify({
         messages,
         temperature: 0.7,
-        max_tokens: 3000,
+        max_tokens: 4000,
         top_p: 0.95,
         frequency_penalty: 0,
         presence_penalty: 0,
@@ -79,29 +77,32 @@ export async function generateDesign(prompt: string, currentState?: Frame): Prom
       throw new Error(`API call failed: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
-    const data: OpenAIResponse = await response.json();
+    const data: OpenAIResponse = await response.json() as OpenAIResponse;
     const content = data.choices[0].message.content;
-    
-    // Log the raw response from the LLM
-    console.log("--------------------LLM RESPONSE--------------------");
-    console.log(content);
-    console.log("--------------------END OF LLM RESPONSE--------------------");
-
+    console.log(content)
     try {
-      const cleanedContent = content.trim();
-      const jsonContent = cleanedContent.startsWith('"frame"') ? `{${cleanedContent}}` : cleanedContent;
-      
-      return JSON.parse(jsonContent) as LLMResponse;
+      return JSON.parse(content);
     } catch (error) {
-      console.log("--------------------ERROR IN PARSING LLM RESPONSE--------------------");
       console.error('Failed to parse LLM response:', error);
-      console.log("--------------------END OF ERROR IN PARSING LLM RESPONSE--------------------");
       throw new Error('Invalid response format from LLM');
     }
+
+
+    // const data: OpenAIResponse = await response.json() as OpenAIResponse;
+    // const content = data.choices[0].message.content;
+    
+
+    // try {
+    //   const cleanedContent = content.trim();
+    //   const jsonContent = cleanedContent.startsWith('"frame"') ? `{${cleanedContent}}` : cleanedContent;
+      
+    //   return JSON.parse(jsonContent);
+    // } catch (error) {
+    //   console.error('Failed to parse LLM response:', error);
+    //   throw new Error('Invalid response format from LLM');
+    // }
   } catch (error) {
-    console.log("--------------------ERROR IN GENERATING DESIGN--------------------");
     console.error('OpenAI API call failed:', error);
-    console.log("--------------------END OF ERROR IN GENERATING DESIGN--------------------");
     throw error;
   }
 } 
