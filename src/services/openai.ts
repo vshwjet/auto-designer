@@ -5,7 +5,7 @@ const config = {
   apiKey: process.env.AZURE_OPENAI_API_KEY as string,
   endpoint: process.env.AZURE_OPENAI_ENDPOINT as string,
   deploymentName: process.env.AZURE_OPENAI_DEPLOYMENT_NAME as string,
-  apiVersion: process.env.AZURE_OPENAI_API_VERSION as string
+  apiVersion: process.env.AZURE_OPENAI_API_VERSION as string,
 };
 
 interface Message {
@@ -31,22 +31,25 @@ interface OpenAIResponse {
 }
 
 export async function generateDesign(prompt: string, currentState?: Frame) {
-  const messages: Message[] = [
-    { role: 'system', content: systemPrompt }
-  ];
+  const messages: Message[] = [{ role: 'system', content: systemPrompt }];
 
   if (currentState) {
     messages.push({
       role: 'assistant',
-      content: JSON.stringify({
-        frame: currentState
-      }, null, 2)
+      content: JSON.stringify(
+        {
+          frame: currentState,
+        },
+        null,
+        2
+      ),
     });
-    
+
     // Add the incremental update instruction
     messages.push({
       role: 'system',
-      content: 'Above is the current design state. Please modify it according to the user\'s request while preserving the rest of the design. Return the complete updated design.'
+      content:
+        "Above is the current design state. Please modify it according to the user's request while preserving the rest of the design. Return the complete updated design.",
     });
   }
 
@@ -59,7 +62,7 @@ export async function generateDesign(prompt: string, currentState?: Frame) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'api-key': config.apiKey
+        'api-key': config.apiKey,
       },
       body: JSON.stringify({
         messages,
@@ -68,18 +71,20 @@ export async function generateDesign(prompt: string, currentState?: Frame) {
         top_p: 0.95,
         frequency_penalty: 0,
         presence_penalty: 0,
-        stop: null
-      })
+        stop: null,
+      }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`API call failed: ${response.status} ${response.statusText} - ${errorText}`);
+      throw new Error(
+        `API call failed: ${response.status} ${response.statusText} - ${errorText}`
+      );
     }
 
-    const data: OpenAIResponse = await response.json() as OpenAIResponse;
+    const data: OpenAIResponse = (await response.json()) as OpenAIResponse;
     const content = data.choices[0].message.content;
-    console.log(content)
+    console.log(content);
     try {
       return JSON.parse(content);
     } catch (error) {
@@ -87,15 +92,13 @@ export async function generateDesign(prompt: string, currentState?: Frame) {
       throw new Error('Invalid response format from LLM');
     }
 
-
     // const data: OpenAIResponse = await response.json() as OpenAIResponse;
     // const content = data.choices[0].message.content;
-    
 
     // try {
     //   const cleanedContent = content.trim();
     //   const jsonContent = cleanedContent.startsWith('"frame"') ? `{${cleanedContent}}` : cleanedContent;
-      
+
     //   return JSON.parse(jsonContent);
     // } catch (error) {
     //   console.error('Failed to parse LLM response:', error);
@@ -105,4 +108,4 @@ export async function generateDesign(prompt: string, currentState?: Frame) {
     console.error('OpenAI API call failed:', error);
     throw error;
   }
-} 
+}

@@ -1,18 +1,23 @@
-import { DesignState, Frame } from "../types";
+import { DesignState, Frame } from '../types';
 
 // Initialize plugin with state management
 export const designState: DesignState = {
   currentFrame: null,
   frameNode: null,
   history: [],
-  historyIndex: -1
+  historyIndex: -1,
 };
 
-
 // Change updateDesignState to arrow syntax
-export default function updateDesignState(frame: Frame, frameNode: FrameNode): void {
+export default function updateDesignState(
+  frame: Frame,
+  frameNode: FrameNode
+): void {
   // Add new state to history, removing any forward history if we're not at the end
-  designState.history = designState.history.slice(0, designState.historyIndex + 1);
+  designState.history = designState.history.slice(
+    0,
+    designState.historyIndex + 1
+  );
   designState.history.push(frame);
   designState.historyIndex++;
 
@@ -34,8 +39,10 @@ export default function updateDesignState(frame: Frame, frameNode: FrameNode): v
     designState.frameNode.name = frameNode.name;
     designState.frameNode.resize(frameNode.width, frameNode.height);
     designState.frameNode.layoutMode = frameNode.layoutMode;
-    designState.frameNode.primaryAxisAlignItems = frameNode.primaryAxisAlignItems;
-    designState.frameNode.counterAxisAlignItems = frameNode.counterAxisAlignItems;
+    designState.frameNode.primaryAxisAlignItems =
+      frameNode.primaryAxisAlignItems;
+    designState.frameNode.counterAxisAlignItems =
+      frameNode.counterAxisAlignItems;
     designState.frameNode.itemSpacing = frameNode.itemSpacing;
     designState.frameNode.paddingTop = frameNode.paddingTop;
     designState.frameNode.paddingRight = frameNode.paddingRight;
@@ -59,10 +66,7 @@ export default function updateDesignState(frame: Frame, frameNode: FrameNode): v
     // If there's no existing frame, use the new one
     designState.frameNode = frameNode;
   }
-};
-
-
-
+}
 
 // // Handle messages from UI
 // figma.ui.onmessage = async (msg: PluginMessage) => {
@@ -113,4 +117,4 @@ export default function updateDesignState(frame: Frame, frameNode: FrameNode): v
 //     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 //     figma.notify('Failed to generate/update design: ' + errorMessage, { error: true });
 //   }
-// }; 
+// };

@@ -1,33 +1,26 @@
-export async function createDropdownComponent(instance: InstanceNode, properties: any) {
-  const props = {
-    "Has Label#10131:578": properties["Has Label"],
-    "Has Hint Text#10131:580": properties["Has Hint Text"],
-    "Dropdown Label#27356:15": properties["Dropdown Label"] || "",
-    "Dropdown Hint#27356:64": properties["Dropdown Hint"] || "",
-    "Size": properties.Size,
-    "Hirerchey": properties.Hirerchey,
-    "Type": properties.Type,
-    "State": properties.State
+import { LLMResponseComponentType } from '../../types/llmResponseType';
+
+const createDropDown = (
+  instance: InstanceNode,
+  component: LLMResponseComponentType
+) => {
+  console.log('Creating dropdown', component.componentName);
+
+  const mappedProps = {
+    'Dropdown Hint#27356:64':
+      component.properties['Dropdown Hint'] || 'Select an option',
+    'Dropdown Label#27356:15':
+      component.properties['Dropdown Label'] || 'Dropdown Label',
+    'Has Hint Text#10131:580': component.properties['Has Hint Text'] || false,
+    'Has Label#10131:578': component.properties['Has Label'] || true,
+    Hirerchey: component.properties['Hirerchey'] || 'Secondary',
+    Size: component.properties['Size'] || 'Large',
+    State: component.properties['State'] || 'Default',
+    Type: component.properties['Type'] || 'Single Select',
   };
-  instance.setProperties(props);
+  console.log(mappedProps);
 
-  if (properties.placeholder) {
-    const findPlaceholderTextNode = (node: SceneNode): TextNode | null => {
-      if (node.type === 'TEXT' && node.characters.toLowerCase().includes('select')) {
-        return node as TextNode;
-      }
-      if ('children' in node) {
-        for (const child of node.children) {
-          const result = findPlaceholderTextNode(child);
-          if (result) return result;
-        }
-      }
-      return null;
-    };
+  instance.setProperties(mappedProps);
+};
 
-    const textNode = findPlaceholderTextNode(instance);
-    if (textNode) {
-      textNode.characters = properties.placeholder;
-    }
-  }
-} 
+export default createDropDown;

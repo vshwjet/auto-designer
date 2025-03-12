@@ -1,7 +1,7 @@
-import { ComponentSpec } from "./commonTypes";
+import { ComponentSpec } from './commonTypes';
 
 export interface FrameLayout {
-  type: "NONE" | "VERTICAL" | "HORIZONTAL";
+  type: 'NONE' | 'VERTICAL' | 'HORIZONTAL';
   padding: {
     top: number;
     right: number;
@@ -10,13 +10,13 @@ export interface FrameLayout {
   };
   itemSpacing: number;
   alignment: {
-    primary: "MIN" | "CENTER" | "MAX";
-    counter: "MIN" | "CENTER" | "MAX";
+    primary: 'MIN' | 'CENTER' | 'MAX';
+    counter: 'MIN' | 'CENTER' | 'MAX';
   };
 }
 
 export interface Frame {
-  type?: "FRAME";
+  type?: 'FRAME';
   name: string;
   width: number;
   height: number;

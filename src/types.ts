@@ -1,11 +1,11 @@
 // Button Types
 export type ButtonKey = {
   [key in ButtonWidthValue]: string;
-}
+};
 
 export type ButtonState = {
   [key in ButtonStateValue]: string;
-}
+};
 
 export type ButtonType = {
   [key in ButtonSizeValue]: {
@@ -13,135 +13,135 @@ export type ButtonType = {
       [key in ButtonStateValue]: string;
     };
   };
-}
+};
 
 export type ButtonHierarchy = {
-  "Solid Fill": ButtonType;
-  "Subtle Fill"?: ButtonType;
-  "No Fill"?: ButtonType;
-}
+  'Solid Fill': ButtonType;
+  'Subtle Fill'?: ButtonType;
+  'No Fill'?: ButtonType;
+};
 
 export type ButtonSize = {
-  "Primary": ButtonHierarchy;
-  "Secondary"?: ButtonHierarchy;
-  "Danger"?: ButtonHierarchy;
-  "Success"?: ButtonHierarchy;
-}
+  Primary: ButtonHierarchy;
+  Secondary?: ButtonHierarchy;
+  Danger?: ButtonHierarchy;
+  Success?: ButtonHierarchy;
+};
 
 // Enums
 export enum ButtonSizeValue {
-  Large = "large",
-  Medium = "medium",
-  Small = "small"
+  Large = 'large',
+  Medium = 'medium',
+  Small = 'small',
 }
 
 export enum ButtonHierarchyValue {
-  Primary = "Primary",
-  Secondary = "Secondary",
-  Danger = "Danger",
-  Success = "Success"
+  Primary = 'Primary',
+  Secondary = 'Secondary',
+  Danger = 'Danger',
+  Success = 'Success',
 }
 
 export enum ButtonTypeValue {
-  SolidFill = "Solid Fill",
-  SubtleFill = "Subtle Fill",
-  NoFill = "No Fill"
+  SolidFill = 'Solid Fill',
+  SubtleFill = 'Subtle Fill',
+  NoFill = 'No Fill',
 }
 
 export enum ButtonStateValue {
-  Default = "Default",
-  Hover = "Hover",
-  Focused = "Focused",
-  Disabled = "Disabled"
+  Default = 'Default',
+  Hover = 'Hover',
+  Focused = 'Focused',
+  Disabled = 'Disabled',
 }
 
 export enum ButtonWidthValue {
-  Half = "Half",
-  Full = "Full"
+  Half = 'Half',
+  Full = 'Full',
 }
 
 // Dropdown Types
 export enum DropdownSizeValue {
-  Large = "Large",
-  Medium = "Medium"
+  Large = 'Large',
+  Medium = 'Medium',
 }
 
 export enum DropdownTypeValue {
-  SingleSelect = "Single Select",
-  Multiselect = "Multiselect"
+  SingleSelect = 'Single Select',
+  Multiselect = 'Multiselect',
 }
 
 export enum DropdownStateValue {
-  Default = "Default",
-  Hovered = "Hovered",
-  Focused = "Focused",
-  Opened = "Opened",
-  Filled = "Filled",
-  Disabled = "Disabled"
+  Default = 'Default',
+  Hovered = 'Hovered',
+  Focused = 'Focused',
+  Opened = 'Opened',
+  Filled = 'Filled',
+  Disabled = 'Disabled',
 }
 
 export enum DropdownHierarchyValue {
-  Secondary = "Secondary",
-  Tertiary = "Tertiary"
+  Secondary = 'Secondary',
+  Tertiary = 'Tertiary',
 }
 
 export type DropdownState = {
   [key in DropdownStateValue]: string;
-}
+};
 
 export type DropdownType = {
   [key in DropdownTypeValue]: DropdownState;
-}
+};
 
 export type DropdownSize = {
   [key in DropdownSizeValue]: DropdownType;
-}
+};
 
 export type DropdownHierarchy = {
   [key in DropdownHierarchyValue]: DropdownSize;
-}
+};
 
 // Input Field Types
 export enum InputFieldSizeValue {
-  Medium = "Medium",
-  Small = "Small"
+  Medium = 'Medium',
+  Small = 'Small',
 }
 
 export enum InputFieldTypeValue {
-  Text = "Text",
-  PhoneNumber = "Phone Number",
-  FloatingLabelText = "Floating Label - Text",
-  FloatingLabelNumber = "Floating Label - Number"
+  Text = 'Text',
+  PhoneNumber = 'Phone Number',
+  FloatingLabelText = 'Floating Label - Text',
+  FloatingLabelNumber = 'Floating Label - Number',
 }
 
 export enum InputFieldStateValue {
-  Default = "Default",
-  Hovered = "Hovered",
-  Focused = "Focused",
-  Disabled = "Disabled",
-  Error = "Error"
+  Default = 'Default',
+  Hovered = 'Hovered',
+  Focused = 'Focused',
+  Disabled = 'Disabled',
+  Error = 'Error',
 }
 
 export enum InputFieldVariantValue {
-  Placeholder = "Placeholder",
-  Filled = "Filled"
+  Placeholder = 'Placeholder',
+  Filled = 'Filled',
 }
 
 export type InputFieldState = {
   [key in InputFieldStateValue]: string;
-}
+};
 
 export type InputFieldType = {
   [key in InputFieldTypeValue]: InputFieldState;
-}
+};
 
 export type InputFieldVariant = {
   [key in InputFieldVariantValue]: InputFieldType;
-}
+};
 
 export type InputFieldSize = {
   [key in InputFieldSizeValue]: InputFieldVariant;
-}
+};
 
 // Component Properties
 export interface ButtonProperties {
@@ -163,10 +163,10 @@ export interface DropdownsProperties {
   Hirerchey: DropdownHierarchyValue;
   Type: DropdownTypeValue;
   State: DropdownStateValue;
-  "Has Label": boolean;
-  "Has Hint Text": boolean;
-  "Dropdown Label": string;
-  "Dropdown Hint": string;
+  'Has Label': boolean;
+  'Has Hint Text': boolean;
+  'Dropdown Label': string;
+  'Dropdown Hint': string;
   placeholder?: string;
 }
 
@@ -196,50 +196,50 @@ export interface InputFieldsProperties {
 }
 
 export enum StatCardTypeValue {
-  Horizontal = "Horizontal",
-  Stacked = "Stacked"
+  Horizontal = 'Horizontal',
+  Stacked = 'Stacked',
 }
 
 export enum StatCardStateValue {
-  Uptrend = "Uptrend",
-  Downtrend = "Downtrend"
+  Uptrend = 'Uptrend',
+  Downtrend = 'Downtrend',
 }
 
 export interface StatCardProperties {
   Type: StatCardTypeValue;
   State: StatCardStateValue;
-  "Stat Label": string;
-  "Stat Value": string;
-  "Stat Delta": string;
+  'Stat Label': string;
+  'Stat Value': string;
+  'Stat Delta': string;
 }
 
 export enum TableColumnPositionValue {
-  Left = "Left",
-  Intermediate = "Intermediate",
-  Right = "Right"
+  Left = 'Left',
+  Intermediate = 'Intermediate',
+  Right = 'Right',
 }
 
 export enum TableColumnVariantValue {
-  Text = "text",
-  Checkbox = "checkbox",
-  Spacer = "spacer",
-  Amount = "amount",
-  Date = "date",
-  Tag = "tag",
-  Icon = "icon",
-  User = "user",
-  CustomiseColumn = "Customise Column"
+  Text = 'text',
+  Checkbox = 'checkbox',
+  Spacer = 'spacer',
+  Amount = 'amount',
+  Date = 'date',
+  Tag = 'tag',
+  Icon = 'icon',
+  User = 'user',
+  CustomiseColumn = 'Customise Column',
 }
 
 export enum TableColumnTypeValue {
-  Header = "header",
-  Cell = "cell"
+  Header = 'header',
+  Cell = 'cell',
 }
 
 export enum TableColumnStateValue {
-  Default = "default",
-  Hover = "hover",
-  Active = "active"
+  Default = 'default',
+  Hover = 'hover',
+  Active = 'active',
 }
 
 export interface TableColumnProperties {
@@ -252,53 +252,63 @@ export interface TableColumnProperties {
 }
 
 export enum TableCellVariantValue {
-  Text = "text",
-  Checkbox = "checkbox",
-  Spacer = "spacer",
-  Amount = "amount",
-  Date = "date",
-  Tag = "tag",
-  Icon = "icon",
-  User = "user",
-  CustomiseColumn = "CustomiseColumn"
+  Text = 'text',
+  Checkbox = 'checkbox',
+  Spacer = 'spacer',
+  Amount = 'amount',
+  Date = 'date',
+  Tag = 'tag',
+  Icon = 'icon',
+  User = 'user',
+  CustomiseColumn = 'CustomiseColumn',
 }
 
 export interface TableCellProperties {
-  type: "header" | "cell";
-  position: "left" | "intermediate" | "right";
+  type: 'header' | 'cell';
+  position: 'left' | 'intermediate' | 'right';
   variant: TableCellVariantValue;
-  state: "default" | "hover" | "active";
-  "Header Content"?: string;
-  "Cell Content - Text"?: string;
-  "Cell Content - Amount"?: string;
-  "Cell Content - Date"?: string;
-  "Cell Content - Tag"?: string;
-  "Cell Content - User"?: string;
-  "Has Cell Icon 1"?: boolean;
-  "Has Cell Icon 2"?: boolean;
-  "Has Cell Icon 3"?: boolean;
-  "Has Cell Icon More"?: boolean;
-  "Has Filter"?: boolean;
+  state: 'default' | 'hover' | 'active';
+  'Header Content'?: string;
+  'Cell Content - Text'?: string;
+  'Cell Content - Amount'?: string;
+  'Cell Content - Date'?: string;
+  'Cell Content - Tag'?: string;
+  'Cell Content - User'?: string;
+  'Has Cell Icon 1'?: boolean;
+  'Has Cell Icon 2'?: boolean;
+  'Has Cell Icon 3'?: boolean;
+  'Has Cell Icon More'?: boolean;
+  'Has Filter'?: boolean;
 }
 
 export interface GraphProperties {
-  type: "Graph";
+  type: 'Graph';
 }
 
 export interface TagProperties {
-  Size: "sm" | "md" | "lg";
-  Color: "Primary" | "Error" | "Warning" | "Success" | "Gray" | "Light Gray" | "Yellow" | "Magenta" | "Teal" | "Cyan";
-  Variant: "Subtle" | "Attentive" | "Outline";
-  Type: "Pill" | "Round";
+  Size: 'sm' | 'md' | 'lg';
+  Color:
+    | 'Primary'
+    | 'Error'
+    | 'Warning'
+    | 'Success'
+    | 'Gray'
+    | 'Light Gray'
+    | 'Yellow'
+    | 'Magenta'
+    | 'Teal'
+    | 'Cyan';
+  Variant: 'Subtle' | 'Attentive' | 'Outline';
+  Type: 'Pill' | 'Round';
   text?: string;
 }
 
-export type CustomComponentProperties = 
-  | ButtonProperties 
-  | BreadcrumbsProperties 
-  | DropdownsProperties 
-  | SelectionProperties 
-  | CursorsProperties 
+export type CustomComponentProperties =
+  | ButtonProperties
+  | BreadcrumbsProperties
+  | DropdownsProperties
+  | SelectionProperties
+  | CursorsProperties
   | InputFieldsProperties
   | StatCardProperties
   | TableColumnProperties
@@ -308,7 +318,15 @@ export type CustomComponentProperties =
 
 // Component Specs
 export interface ComponentSpec {
-  type: "Button" | "Dropdown" | "InputField" | "StatCard" | "TableColumn" | "TableCell" | "Graph" | "Tag";
+  type:
+    | 'Button'
+    | 'Dropdown'
+    | 'InputField'
+    | 'StatCard'
+    | 'TableColumn'
+    | 'TableCell'
+    | 'Graph'
+    | 'Tag';
   key: string;
   properties: CustomComponentProperties;
 }
@@ -322,7 +340,7 @@ export interface ComponentConfig {
 
 // API Response Types
 export interface FrameLayout {
-  type: "NONE" | "VERTICAL" | "HORIZONTAL";
+  type: 'NONE' | 'VERTICAL' | 'HORIZONTAL';
   padding: {
     top: number;
     right: number;
@@ -331,13 +349,13 @@ export interface FrameLayout {
   };
   itemSpacing: number;
   alignment: {
-    primary: "MIN" | "CENTER" | "MAX";
-    counter: "MIN" | "CENTER" | "MAX";
+    primary: 'MIN' | 'CENTER' | 'MAX';
+    counter: 'MIN' | 'CENTER' | 'MAX';
   };
 }
 
 export interface Frame {
-  type?: "FRAME";
+  type?: 'FRAME';
   name: string;
   width: number;
   height: number;
@@ -372,4 +390,4 @@ export interface ComponentRegistry<T> {
   components: {
     [key: string]: T;
   };
-} 
+}

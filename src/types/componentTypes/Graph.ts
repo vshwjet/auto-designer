@@ -1,3 +1,3 @@
 export interface GraphProperties {
-  type: "Graph";
-} 
+  type: 'Graph';
+}

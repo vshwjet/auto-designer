@@ -1,10 +1,15 @@
-import { LLMResponseComponentType } from "../types/llmResponseType";
-import { createButton, createTableColComponent } from "./componentCreators";
-import createSingleStatCard from "./componentCreators/statCardCreator";
-import { listComponentProperties, loadInterFonts } from "./utils";
+import { LLMResponseComponentType } from '../types/llmResponseType';
+import { createButton } from './componentCreators';
+import createDropDown from './componentCreators/dropdownCreator';
+import createSingleStatCard from './componentCreators/statCardCreator';
+import { listComponentProperties, loadInterFonts } from './utils';
 
-const createComponent = async (parentFrame: FrameNode, component: LLMResponseComponentType)=> {
-  console.log("Creating component", component.componentName);
+const createComponent = async (
+  parentFrame: FrameNode,
+  component: LLMResponseComponentType
+) => {
+  // console.log('Creating component', component.componentName);
+  console.log('Creating a new component ---- ', component.componentName);
   try {
     await loadInterFonts();
     const key = component.key;
@@ -15,33 +20,37 @@ const createComponent = async (parentFrame: FrameNode, component: LLMResponseCom
     }
 
     const instance = importedComponent.createInstance();
-    parentFrame.appendChild(instance);
-
 
     switch (component.componentName) {
-      case "Button":
+      case 'Button':
         createButton(instance, component);
         break;
-      case "StatCard":
-         createSingleStatCard(instance, component);
-         break;
-      case "Dropdown": 
+      case 'StatCard':
+        createSingleStatCard(instance, component);
+        break;
+      case 'Dropdown':
         createDropDown(instance, component);
         break;
+
+      case 'InputField':
+        createInputField(instance, component);
+        break;
     }
+
+    parentFrame.appendChild(instance);
   } catch (error) {
-    console.error("Error creating component:", error);
+    console.error('Error creating component:', error);
     return null;
   }
-}
+};
 
-const createDropDown = (instance: InstanceNode, component: LLMResponseComponentType)=> {
-  console.log("Creating dropdown", component.componentName);
-  const mappedProps = {
-    "State": component.properties["State"] || "default",
-  }
-  instance.setProperties(mappedProps);
-}
+const createInputField = (
+  instance: InstanceNode,
+  component: LLMResponseComponentType
+) => {
+  console.log('Creating input field', component.componentName);
+  listComponentProperties(instance);
+};
 
 export default createComponent;
 

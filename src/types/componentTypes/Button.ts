@@ -1,43 +1,43 @@
 // Enums
 export enum ButtonSizeValue {
-  Large = "large",
-  Medium = "medium",
-  Small = "small"
+  Large = 'large',
+  Medium = 'medium',
+  Small = 'small',
 }
 
 export enum ButtonHierarchyValue {
-  Primary = "Primary",
-  Secondary = "Secondary",
-  Danger = "Danger",
-  Success = "Success"
+  Primary = 'Primary',
+  Secondary = 'Secondary',
+  Danger = 'Danger',
+  Success = 'Success',
 }
 
 export enum ButtonTypeValue {
-  SolidFill = "Solid Fill",
-  SubtleFill = "Subtle Fill",
-  NoFill = "No Fill"
+  SolidFill = 'Solid Fill',
+  SubtleFill = 'Subtle Fill',
+  NoFill = 'No Fill',
 }
 
 export enum ButtonStateValue {
-  Default = "Default",
-  Hover = "Hover",
-  Focused = "Focused",
-  Disabled = "Disabled"
+  Default = 'Default',
+  Hover = 'Hover',
+  Focused = 'Focused',
+  Disabled = 'Disabled',
 }
 
 export enum ButtonWidthValue {
-  Half = "Half",
-  Full = "Full"
+  Half = 'Half',
+  Full = 'Full',
 }
 
 // Types
 export type ButtonKey = {
   [key in ButtonWidthValue]: string;
-}
+};
 
 export type ButtonState = {
   [key in ButtonStateValue]: string;
-}
+};
 
 export type ButtonType = {
   [key in ButtonSizeValue]: {
@@ -45,20 +45,20 @@ export type ButtonType = {
       [key in ButtonStateValue]: string;
     };
   };
-}
+};
 
 export type ButtonHierarchy = {
-  "Solid Fill": ButtonType;
-  "Subtle Fill"?: ButtonType;
-  "No Fill"?: ButtonType;
-}
+  'Solid Fill': ButtonType;
+  'Subtle Fill'?: ButtonType;
+  'No Fill'?: ButtonType;
+};
 
 export type ButtonSize = {
-  "Primary": ButtonHierarchy;
-  "Secondary"?: ButtonHierarchy;
-  "Danger"?: ButtonHierarchy;
-  "Success"?: ButtonHierarchy;
-}
+  Primary: ButtonHierarchy;
+  Secondary?: ButtonHierarchy;
+  Danger?: ButtonHierarchy;
+  Success?: ButtonHierarchy;
+};
 
 export interface ButtonProperties {
   Size: ButtonSizeValue;
@@ -67,4 +67,4 @@ export interface ButtonProperties {
   State: ButtonStateValue;
   Width: ButtonWidthValue;
   label?: string;
-} 
+}

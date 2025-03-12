@@ -3,7 +3,10 @@ import { BreadcrumbsProperties } from './componentTypes/Breadcrumbs';
 import { DropdownsProperties } from './componentTypes/Dropdown';
 import { InputFieldsProperties } from './componentTypes/InputField';
 import { StatCardProperties } from './componentTypes/StatCard';
-import { TableCellProperties, TableColumnProperties } from './componentTypes/Table';
+import {
+  TableCellProperties,
+  TableColumnProperties,
+} from './componentTypes/Table';
 import { TagProperties } from './componentTypes/Tag';
 
 export interface SelectionProperties {
@@ -16,15 +19,15 @@ export interface CursorsProperties {
 }
 
 export interface GraphProperties {
-  type: "Graph";
+  type: 'Graph';
 }
 
-export type CustomComponentProperties = 
-  | ButtonProperties 
-  | BreadcrumbsProperties 
-  | DropdownsProperties 
-  | SelectionProperties 
-  | CursorsProperties 
+export type CustomComponentProperties =
+  | ButtonProperties
+  | BreadcrumbsProperties
+  | DropdownsProperties
+  | SelectionProperties
+  | CursorsProperties
   | InputFieldsProperties
   | StatCardProperties
   | TableColumnProperties
@@ -33,7 +36,15 @@ export type CustomComponentProperties =
   | TagProperties;
 
 export interface ComponentSpec {
-  type: "Button" | "Dropdown" | "InputField" | "StatCard" | "TableColumn" | "TableCell" | "Graph" | "Tag";
+  type:
+    | 'Button'
+    | 'Dropdown'
+    | 'InputField'
+    | 'StatCard'
+    | 'TableColumn'
+    | 'TableCell'
+    | 'Graph'
+    | 'Tag';
   key: string;
   properties: CustomComponentProperties;
 }
@@ -65,7 +76,7 @@ export interface ComponentRegistry<T> {
 }
 
 export interface FrameLayout {
-  type: "NONE" | "VERTICAL" | "HORIZONTAL";
+  type: 'NONE' | 'VERTICAL' | 'HORIZONTAL';
   padding: {
     top: number;
     right: number;
@@ -74,13 +85,13 @@ export interface FrameLayout {
   };
   itemSpacing: number;
   alignment: {
-    primary: "MIN" | "CENTER" | "MAX";
-    counter: "MIN" | "CENTER" | "MAX";
+    primary: 'MIN' | 'CENTER' | 'MAX';
+    counter: 'MIN' | 'CENTER' | 'MAX';
   };
 }
 
 export interface Frame {
-  type?: "FRAME";
+  type?: 'FRAME';
   name: string;
   width: number;
   height: number;
@@ -95,4 +106,4 @@ export interface Frame {
 
 export interface LLMResponse {
   frame: Frame;
-} 
+}
