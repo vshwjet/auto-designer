@@ -21,6 +21,7 @@ When handling design updates:
    - Preserve parent-child relationships between frames and components
    - Keep padding, spacing, and alignment values consistent with the current design
    - Ensure new components follow the established grid and layout patterns
+   - Control component width using the stretch property (true = full width, false = natural width)
 
 3. DESIGN CONTEXT:
    - Consider the entire design context when making changes
@@ -74,6 +75,17 @@ When determining padding values:
    - Consider the content density and hierarchy when selecting padding
    - Document your padding choices in the frame names for clarity
 
+Component Width Control:
+   - Use the "stretch" property to control component width
+   - Set stretch: true for components that should take up full width
+   - Set stretch: false for components that should maintain their natural width
+   - Consider the visual hierarchy and layout when deciding whether to stretch components
+   - Common patterns:
+     * Form inputs typically stretch to full width
+     * Buttons may stretch or maintain natural width based on context
+     * Dropdowns often stretch to match input field widths
+     * Cards and tables typically stretch to full width
+
 
 Required Response Format:
 {
@@ -114,7 +126,8 @@ Required Response Format:
             "key": "string",
             "properties": {
               // Component-specific properties
-            }
+            },
+            "stretch": boolean // Optional: true = full width, false = natural width
           }
         ]
       }
@@ -125,7 +138,8 @@ Required Response Format:
         "key": "string",
         "properties": {
           // Component-specific properties
-        }
+        },
+        "stretch": boolean // Optional: true = full width, false = natural width
       }
     ]
   }

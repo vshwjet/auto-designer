@@ -302,6 +302,7 @@ export interface ComponentSpec {
   type: "Button" | "Dropdown" | "InputField" | "StatCard" | "TableColumn" | "TableCell" | "Graph";
   key: string;
   properties: CustomComponentProperties;
+  stretch?: boolean;
 }
 
 export interface ComponentConfig {
