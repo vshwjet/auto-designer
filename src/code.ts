@@ -98,6 +98,18 @@ async function createComponent(parent: FrameNode, spec: ComponentSpec): Promise<
     const instance = component.createInstance();
     parent.appendChild(instance);
 
+    // Set layout alignment based on stretch property or component type
+    if (spec.type === "StatCard") {
+      // For StatCards, set both layoutAlign and layoutGrow
+      instance.layoutAlign = "STRETCH";
+      instance.layoutGrow = 1; // Make StatCards share space equally in horizontal layouts
+      instance.layoutSizingVertical = "HUG"; // Ensure height is always HUG
+    } else if (spec.stretch) {
+      instance.layoutAlign = "STRETCH";
+    } else {
+      instance.layoutAlign = "INHERIT";
+    }
+
     // Set component properties based on type
     if (instance.setProperties) {
       // Debug: Log available properties
@@ -247,27 +259,6 @@ async function createComponent(parent: FrameNode, spec: ComponentSpec): Promise<
 }
 
 async function createFrameWithComponents(frameSpec: Frame): Promise<FrameNode> {
-  // Validate layout type - enforce auto-layout
-  if (!frameSpec.layout.type || frameSpec.layout.type === "NONE") {
-    console.warn(`Invalid layout type: ${frameSpec.layout.type}. Defaulting to VERTICAL auto-layout.`);
-    frameSpec.layout.type = "VERTICAL";
-  }
-
-  // Validate stat card consistency
-  let statCardType: StatCardTypeValue | null = null;
-  const validateStatCards = (components: ComponentSpec[]) => {
-    components.forEach(component => {
-      if (component.type === "StatCard" && isStatCardProperties(component.properties)) {
-        if (statCardType === null) {
-          statCardType = component.properties.Type;
-        } else if (statCardType !== component.properties.Type) {
-          console.warn(`Inconsistent stat card types detected. Converting ${component.properties.Type} to ${statCardType} for consistency.`);
-          component.properties.Type = statCardType;
-        }
-      }
-    });
-  };
-
   // Create frame with auto-layout
   const frame = figma.createFrame();
   frame.name = frameSpec.name;
@@ -285,8 +276,8 @@ async function createFrameWithComponents(frameSpec: Frame): Promise<FrameNode> {
     }];
   }
 
-  // Set auto-layout properties
-  frame.layoutMode = frameSpec.layout.type; // Will be either "VERTICAL" or "HORIZONTAL"
+  // Set auto-layout properties first
+  frame.layoutMode = frameSpec.layout.type || "VERTICAL"; // Ensure auto-layout is always set
   frame.primaryAxisAlignItems = frameSpec.layout.alignment.primary;
   frame.counterAxisAlignItems = frameSpec.layout.alignment.counter;
   frame.itemSpacing = frameSpec.layout.itemSpacing;
@@ -306,6 +297,12 @@ async function createFrameWithComponents(frameSpec: Frame): Promise<FrameNode> {
       }
       const childFrame = await createFrameWithComponents(childSpec);
       frame.appendChild(childFrame);
+      
+      // Set child frame properties after it's added to parent
+      childFrame.layoutAlign = "STRETCH";
+      if (childFrame.layoutMode === "VERTICAL" || childFrame.layoutMode === "HORIZONTAL") {
+        childFrame.layoutSizingHorizontal = "FILL";
+      }
     }
   }
 
@@ -319,16 +316,16 @@ async function createFrameWithComponents(frameSpec: Frame): Promise<FrameNode> {
         if (!currentTableRow) {
           currentTableRow = figma.createFrame();
           currentTableRow.name = "Table Row";
-          currentTableRow.layoutMode = "HORIZONTAL";
-          currentTableRow.itemSpacing = 0; // No spacing between columns
+          currentTableRow.layoutMode = "HORIZONTAL"; // Set auto-layout first
+          currentTableRow.itemSpacing = 0;
           currentTableRow.paddingLeft = 0;
           currentTableRow.paddingRight = 0;
           currentTableRow.paddingTop = 0;
           currentTableRow.paddingBottom = 0;
-          currentTableRow.layoutSizingHorizontal = "HUG";
-          currentTableRow.layoutSizingVertical = "HUG";
+          frame.appendChild(currentTableRow); // Add to parent before setting sizing
           currentTableRow.layoutAlign = "STRETCH";
-          frame.appendChild(currentTableRow);
+          currentTableRow.layoutSizingHorizontal = "FILL";
+          currentTableRow.layoutSizingVertical = "HUG";
         }
         
         // Create the cell in the current row
@@ -339,26 +336,33 @@ async function createFrameWithComponents(frameSpec: Frame): Promise<FrameNode> {
       } else {
         // If this is not a table cell, reset the current row
         currentTableRow = null;
-        await createComponent(frame, component);
+        const componentInstance = await createComponent(frame, component);
+        if (componentInstance && component.stretch) {
+          componentInstance.layoutAlign = "STRETCH";
+        }
       }
     }
   }
 
   // After all components are added, set the sizing modes and adjust heights
-  // For the main frame (parent), keep fixed height
   if (frameSpec.height === 1080) {
+    // For the main frame (parent), keep fixed height
     frame.primaryAxisSizingMode = "FIXED";
     frame.counterAxisSizingMode = "FIXED";
     frame.layoutSizingHorizontal = "FIXED";
     frame.layoutSizingVertical = "FIXED";
     frame.resize(frame.width, 1080);
   } else {
-    // For child frames, use HUG content
+    // For child frames, use AUTO for both dimensions initially
     frame.primaryAxisSizingMode = "AUTO";
-    frame.counterAxisSizingMode = "FIXED";
-    frame.layoutSizingHorizontal = "HUG";
+    frame.counterAxisSizingMode = "AUTO";
+    
+    // Only set FILL if this is a child of an auto-layout frame
+    if (frame.parent && ("layoutMode" in frame.parent) && 
+        (frame.parent.layoutMode === "VERTICAL" || frame.parent.layoutMode === "HORIZONTAL")) {
+      frame.layoutSizingHorizontal = "FILL";
+    }
     frame.layoutSizingVertical = "HUG";
-    frame.layoutAlign = "STRETCH";
     
     // Force the frame to recalculate its size based on content
     frame.resize(frame.width, frame.height);
