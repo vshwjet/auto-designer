@@ -4,8 +4,6 @@ const createDropDown = (
   instance: InstanceNode,
   component: LLMResponseComponentType
 ) => {
-  console.log('Creating dropdown', component.componentName);
-
   const mappedProps = {
     'Dropdown Hint#27356:64':
       component.properties['Dropdown Hint'] || 'Select an option',
@@ -18,7 +16,7 @@ const createDropDown = (
     State: component.properties['State'] || 'Default',
     Type: component.properties['Type'] || 'Single Select',
   };
-  console.log(mappedProps);
+
 
   instance.setProperties(mappedProps);
 };

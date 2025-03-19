@@ -23,7 +23,6 @@ export interface LLMResponseFrameType {
       primary: 'MIN' | 'CENTER' | 'MAX' | 'SPACE_BETWEEN';
       counter: 'MIN' | 'CENTER' | 'MAX' | 'BASELINE';
     };
-    
   };
   background: {
     color: {
@@ -45,7 +44,11 @@ export interface LLMResponseComponentType {
     | 'InputField'
     | 'StatCard'
     | 'Data Table'
-    | 'Graph';
+    | 'Graph'
+    | 'Text'
+    | 'Tag'
+    | 'Tabs'
+    | 'Chart';
   key: string;
   properties: Record<string, string>;
   cells: TableCellType[][];

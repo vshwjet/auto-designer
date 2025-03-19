@@ -6,11 +6,14 @@ import {
 import { createTableFrame } from './componentCreators';
 import createComponent from './createComponent';
 
-export const createParentFrame = async (frame: LLMResponseFrameType) => {
-  console.log('Creating parent frame', frame.name);
-
-  const parentFrame = figma.createFrame();
+export const createParentFrame = async (
+  frame: LLMResponseFrameType,
+  parentFrame: FrameNode
+) => {
   parentFrame.name = frame.name;
+  parentFrame.layoutMode = 'VERTICAL';
+  parentFrame.primaryAxisSizingMode = 'AUTO';
+  parentFrame.counterAxisSizingMode = 'AUTO';
 
   setFrameLayoutDetails(
     parentFrame,
@@ -21,56 +24,61 @@ export const createParentFrame = async (frame: LLMResponseFrameType) => {
   );
 
   const children = frame.children;
-  for (const child of children) {
+  for (const childDetails of children) {
     if (
-      child.type === ChildType.FRAME ||
-      child.type === ChildType.TABLE_FRAME
+      childDetails.type === ChildType.FRAME ||
+      childDetails.type === ChildType.TABLE_FRAME
     ) {
-      const childFrame = await createFrame(child);
+      const childFrame = figma.createFrame();
       parentFrame.appendChild(childFrame);
+      await createFrame(childDetails, childFrame);
     }
   }
-
   return parentFrame;
 };
 
-const createFrame = async (frame: LLMResponseFrameType) => {
-  console.log(`Creating frame of type ${frame.type}`, frame.name);
 
-  if (frame.type === ChildType.TABLE_FRAME) {
-    const tableFrame = await createTableFrame(frame);
-    return tableFrame;
+const createFrame = async (frameData: LLMResponseFrameType, currFrame: FrameNode) => {
+  if(frameData.type === ChildType.TABLE_FRAME) {
+    currFrame.layoutMode = "HORIZONTAL";
+    currFrame.layoutSizingHorizontal = "FILL";
+    currFrame.layoutSizingVertical = "HUG";
+    currFrame.itemSpacing = 0;
+    await createTableFrame(frameData, currFrame)
+    return;
   }
 
-  const frameNode = figma.createFrame();
-  frameNode.name = frame.name;
+  currFrame.name = frameData.name;
   setFrameLayoutDetails(
-    frameNode,
-    frame.layout,
-    frame.width,
-    frame.height,
-    frame.background
-  );
+    currFrame,
+    frameData.layout,
+    frameData.width,
+    frameData.height,
+    frameData.background
+  )
 
-  if (frame.children) {
-    for (const child of frame.children) {
-      if (child.type === ChildType.FRAME) {
-        const childFrame = await createFrame(child);
-        frameNode.appendChild(childFrame);
-      } else if (child.type === ChildType.COMPONENT) {
-        const childComponent = await createComponent(
-          frameNode,
-          child as LLMResponseComponentType
-        );
-        if (childComponent) {
-          frameNode.appendChild(childComponent);
-        }
+  currFrame.layoutMode = frameData.layout?.type; 
+  currFrame.layoutSizingHorizontal = "FILL"
+  currFrame.layoutSizingVertical = "HUG"
+
+  if(!frameData.children || frameData.children.length === 0) return;
+
+  for(const child of frameData.children){
+    if(child.type === ChildType.FRAME) {
+      const childFrame = figma.createFrame();
+      currFrame.appendChild(childFrame);
+      await createFrame(child, childFrame);
+    } else if(child.type === ChildType.COMPONENT) {
+      const childComponent = await createComponent(currFrame, child as LLMResponseComponentType);
+    
+      if(childComponent) {
+        currFrame.appendChild(childComponent);
+        applyComponentSpecificProperties(childComponent, child as LLMResponseComponentType);
       }
     }
   }
-
-  return frameNode;
-};
+  return currFrame;
+}
 
 const setFrameLayoutDetails = (
   frame?: FrameNode,
@@ -82,7 +90,7 @@ const setFrameLayoutDetails = (
   if (!frame) return;
 
   if (width && height) {
-    frame.resize(Math.max(width || 100, 0.01), height);
+    frame.resize(width, height);
   }
 
   if (layoutDetails) {
@@ -92,10 +100,6 @@ const setFrameLayoutDetails = (
     frame.paddingBottom = layoutDetails.padding.bottom;
     frame.paddingLeft = layoutDetails.padding.left;
     frame.itemSpacing = layoutDetails.itemSpacing;
-    // frame.primaryAxisAlignItems = layoutDetails.alignment.primary;
-    // frame.counterAxisAlignItems = layoutDetails.alignment.counter;
-    frame.counterAxisSizingMode = 'AUTO';
-    frame.primaryAxisSizingMode = 'AUTO';
   }
 
   if (backgroundColor) {
@@ -110,5 +114,14 @@ const setFrameLayoutDetails = (
         opacity: backgroundColor.opacity,
       },
     ];
+  }
+};
+
+const applyComponentSpecificProperties = (
+  component: InstanceNode,
+  componentData: LLMResponseComponentType
+) => {
+  if (componentData.componentName === "StatCard") {
+    component.layoutSizingHorizontal = "FILL";
   }
 };

@@ -11,6 +11,9 @@ const createSingleStatCard = (
     Type: component.properties['Type'] || 'horizontal',
     'Stat Value#27356:5': component.properties['Stat Value'] || '100',
   };
+  // instance.resize(500, instance.height);
+  // instance.layoutMode = "HORIZONTAL";
+  // instance.layoutSizingHorizontal = "FILL";
   instance.setProperties(mappedProps);
 };
 

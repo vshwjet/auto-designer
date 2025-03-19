@@ -1,36 +1,30 @@
 import { LLMResponseFrameType } from '../../types/llmResponseType';
+import { listComponentProperties } from '../utils';
 
-const createTableFrame = async (frame: LLMResponseFrameType) => {
-  console.log('Creating table frame', frame.name);
-  const tableFrame = figma.createFrame();
-  tableFrame.name = frame.name;
+const createTableFrame = async (
+  frameDetails: LLMResponseFrameType,
+  tableFrame: FrameNode
+) => {
+  tableFrame.name = frameDetails.name;
+  if (!frameDetails.cells) return tableFrame;
 
-  tableFrame.layoutMode = 'HORIZONTAL';
-  tableFrame.primaryAxisSizingMode = 'AUTO';
-  tableFrame.counterAxisSizingMode = 'AUTO';
-  tableFrame.itemSpacing = 0;
-  tableFrame.layoutGrow = 1;
-
-  if (!frame.cells) return tableFrame;
-
-  for (const cols of frame.cells) {
+  for (const cols of frameDetails.cells) {
     const colFrame = figma.createFrame();
+    tableFrame.appendChild(colFrame);
     colFrame.name = 'Column';
     colFrame.layoutMode = 'VERTICAL';
-    colFrame.primaryAxisSizingMode = 'AUTO';
-    colFrame.counterAxisSizingMode = 'AUTO';
+    colFrame.layoutSizingVertical = 'HUG';
+    colFrame.layoutSizingHorizontal = 'FILL';
     colFrame.itemSpacing = 0;
 
     for (const cell of cols) {
       const cellFrame = await createTableCell(cell);
       if (cellFrame) {
         colFrame.appendChild(cellFrame);
+        cellFrame.layoutSizingHorizontal = "FILL";
       }
     }
-
-    tableFrame.appendChild(colFrame);
   }
-
   return tableFrame;
 };
 
@@ -41,26 +35,41 @@ async function createTableCell(cell: any) {
     return null;
   }
   const instance = component.createInstance();
+  const properties = cell.properties;
+  const cellVariant = properties.variant;
+  const cellType = properties.type;
 
-  const props = cell.properties;
-  const cellType = props.type || 'header';
+  switch (cellType) {
+    case "header":
+      instance.setProperties({
+        "Header Content#10157:166": properties['Header Content'] || 'Header'
+      });
+      break;
+    case "cell":
+      switch (cellVariant) {
+        case "text":
+          instance.setProperties({
+            "Cell Content - Text#10157:224": properties['Cell Content - Text'] || 'Text'
+          });
+          break;
 
-  const mappedProps: { [key: string]: string | boolean } = {
-    type: cellType,
-    variant: props['variant']?.value || 'text',
-    state: props['state']?.value || 'default',
-    position: props.position || 'left',
-  };
+        case "date":
+          instance.setProperties({
+            "Cell Content - Alphanumeric#10157:340": properties['Cell Content - Alphanumeric'] || 'Date'
+          });
+          break;
 
-  // Add the appropriate content property based on cell type
-  if (cellType === 'cell') {
-    mappedProps['Cell Content - Text#10157:224'] =
-      props['Cell Content - Text'] || '';
-  } else if (cellType === 'header') {
-    mappedProps['Header Content#10157:166'] = props['Header Content'] || '';
+        case "amount":
+          instance.setProperties({
+            "Cell Content - Number#10157:282": properties['Cell Content - Number'] || 'Amount'
+          });
+          break;
+      }
+      break;
   }
 
-  instance.setProperties(mappedProps);
+
+
   return instance;
 }
 

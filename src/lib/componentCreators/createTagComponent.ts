@@ -26,6 +26,6 @@ export async function createTagComponent(
     Variant: properties.variant || 'Attentive',
   };
 
-  console.log(mappedProps);
+
   instance.setProperties(mappedProps);
 }

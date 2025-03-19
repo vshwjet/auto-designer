@@ -11,6 +11,13 @@ import { generateDesign } from './services/openai';
 import { PluginMessage } from './types';
 import { ChildType, LLMResponseType } from './types/llmResponseType';
 
+function parseNumberedList(input: string): string[] {
+  return input
+    .split('\n')
+    .map((line) => line.replace(/^\d+\.\s*/, ''))
+    .filter((line) => line.trim() !== '');
+}
+
 figma.ui.onmessage = async (msg: PluginMessage) => {
   try {
     switch (msg.type) {
@@ -20,58 +27,21 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
         }
 
         figma.notify('Generating design...');
-        const designSpec: LLMResponseType = await generateDesign(msg.prompt);
-          // console.log(designSpec);
 
-        const createdFrames: FrameNode[] = [];
+        console.log(parseNumberedList(msg.prompt));
+        // const designSpec: LLMResponseType = await generateDesign(msg.prompt);
 
-        const flows = designSpec.flows;
-        for (const flow of flows) {
-          if (flow.type === ChildType.PARENT) {
-            const flowNode = await createParentFrame(flow);
-            createdFrames.push(flowNode);
-          }
-        }
+        // const createdFrames: FrameNode[] = [];
 
-
-
-        figma.viewport.scrollAndZoomIntoView(createdFrames);
-
-
-        // ------------------------------------------------------------
-        // console.log('Creating sample');
-        // const parentFrame = figma.createFrame();
-        // parentFrame.name = 'Parent Frame';
-        // parentFrame.layoutMode = 'HORIZONTAL';
-        // parentFrame.primaryAxisSizingMode = 'AUTO';
-        // parentFrame.counterAxisSizingMode = 'AUTO';
-        // parentFrame.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }];
-      
-        // parentFrame.paddingLeft = 20;
-        // parentFrame.paddingRight = 20;
-        // parentFrame.paddingTop = 20;
-        // parentFrame.paddingBottom = 20;
-        // parentFrame.itemSpacing = 10;
-      
-        // const childFrame1 = figma.createFrame();
-        // childFrame1.name = 'Child Frame 1';
-        // childFrame1.layoutMode = 'HORIZONTAL';
-        // childFrame1.layoutGrow = 1;
-        // childFrame1.primaryAxisSizingMode = 'AUTO';
-        // childFrame1.counterAxisSizingMode = 'AUTO';
-        // childFrame1.fills = [{ type: 'SOLID', color: { r: 0, g: 0, b: 1 } }];
-      
-        // const rectangle = figma.createRectangle();
-        // rectangle.resize(500, 500);
-        // rectangle.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }];
-      
-        // childFrame1.appendChild(rectangle);
-        // rectangle.constraints = { horizontal: 'MIN', vertical: 'CENTER' };
-      
-        // parentFrame.appendChild(childFrame1);
-        // figma.currentPage.appendChild(parentFrame);
-      
-        // console.log('Done');
+        // const flowDetails = designSpec.flows;
+        // for (const flowDetail of flowDetails) {
+        //   if (flowDetail.type === ChildType.PARENT) {
+        //     const flowFrame = figma.createFrame();
+        //     figma.currentPage.appendChild(flowFrame);
+        //     createdFrames.push(flowFrame);
+        //     await createParentFrame(flowDetail, flowFrame);
+        //   }
+        // }
       case 'cancel':
         figma.closePlugin();
         break;
@@ -82,39 +52,4 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
       error instanceof Error ? error.message : 'Unknown error';
     figma.notify('Failed to generate design: ' + errorMessage, { error: true });
   }
-};
-
-const createSample = () => {
-  const parentFrame = figma.createFrame();
-  parentFrame.name = 'Parent Frame';
-  parentFrame.layoutMode = 'HORIZONTAL';
-  parentFrame.primaryAxisSizingMode = 'AUTO';
-  parentFrame.counterAxisSizingMode = 'AUTO';
-  parentFrame.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }];
-
-  parentFrame.paddingLeft = 20;
-  parentFrame.paddingRight = 20;
-  parentFrame.paddingTop = 20;
-  parentFrame.paddingBottom = 20;
-  parentFrame.itemSpacing = 10;
-
-  const childFrame1 = figma.createFrame();
-  childFrame1.name = 'Child Frame 1';
-  childFrame1.layoutMode = 'HORIZONTAL';
-  childFrame1.layoutGrow = 1;
-  childFrame1.primaryAxisSizingMode = 'AUTO';
-  childFrame1.counterAxisSizingMode = 'AUTO';
-  childFrame1.fills = [{ type: 'SOLID', color: { r: 0, g: 0, b: 1 } }];
-
-  const rectangle = figma.createRectangle();
-  rectangle.resize(50, 50);
-  rectangle.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }];
-
-  childFrame1.appendChild(rectangle);
-  rectangle.constraints = { horizontal: 'MIN', vertical: 'CENTER' };
-
-  parentFrame.appendChild(childFrame1);
-  figma.currentPage.appendChild(parentFrame);
-
-  console.log('Done');
 };
