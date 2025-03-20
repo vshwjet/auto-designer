@@ -39,6 +39,8 @@ async function createTableCell(cell: any) {
   const cellVariant = properties.variant;
   const cellType = properties.type;
 
+  
+  if(cellVariant === "tag") listComponentProperties(instance);
   switch (cellType) {
     case "header":
       instance.setProperties({

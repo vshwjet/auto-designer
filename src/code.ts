@@ -9,7 +9,7 @@ figma.showUI(__html__, {
 import { createParentFrame } from './lib/createFlow';
 import { generateDesign } from './services/openai';
 import { PluginMessage } from './types';
-import { ChildType, LLMResponseType } from './types/llmResponseType';
+import { ChildType, LLMResponseFrameType, LLMResponseType } from './types/llmResponseType';
 
 function parseNumberedList(input: string): string[] {
   return input
@@ -28,7 +28,39 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
 
         figma.notify('Generating design...');
 
-        console.log(parseNumberedList(msg.prompt));
+        const prompts = parseNumberedList(msg.prompt);
+
+        // const childrenThatWeNeed:LLMResponseFrameType[] | LLMResponseComponentType[] = [];
+
+        // for (const prompt of prompts) {
+        //   const designSpec: LLMResponseType = await generateDesign(prompt);
+        //   const flowDetails = designSpec.flows[0];
+        //   childrenThatWeNeed.push(flowDetails.children);
+          
+        // }
+
+        const artboard = figma.createFrame();
+        artboard.resize(1728, 1024);
+        figma.currentPage.appendChild(artboard);
+
+        artboard.name = 'Flow';
+        artboard.layoutMode = 'VERTICAL';
+        // artboard.primaryAxisSizingMode = 'AUTO';
+        // artboard.counterAxisSizingMode = 'AUTO';
+
+        // Add a delay function
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+        for (const prompt of prompts) {
+          const designSpec: any = await generateDesign(prompt);
+          const flowDetails = designSpec.flows[0];
+
+          await createParentFrame(flowDetails, artboard);
+          
+          // Add a 1 second delay before processing the next prompt
+          await delay(1000);
+        }
+
         // const designSpec: LLMResponseType = await generateDesign(msg.prompt);
 
         // const createdFrames: FrameNode[] = [];

@@ -7,38 +7,57 @@ import { createTableFrame } from './componentCreators';
 import createComponent from './createComponent';
 
 export const createParentFrame = async (
-  frame: LLMResponseFrameType,
-  parentFrame: FrameNode
+  sectionDetails: LLMResponseFrameType,
+  artboard: FrameNode
 ) => {
-  parentFrame.name = frame.name;
-  parentFrame.layoutMode = 'VERTICAL';
-  parentFrame.primaryAxisSizingMode = 'AUTO';
-  parentFrame.counterAxisSizingMode = 'AUTO';
+  console.log('Creating parent frame');
+  const sectionFrame = figma.createFrame();
+  artboard.appendChild(sectionFrame);
+
+  if(sectionDetails.type === ChildType.TABLE_FRAME ){
+    sectionFrame.layoutMode = "HORIZONTAL";
+    sectionFrame.layoutSizingHorizontal = "FILL";
+    sectionFrame.layoutSizingVertical = "HUG";
+    await createTableFrame(sectionDetails, sectionFrame)
+    return;
+  }
 
   setFrameLayoutDetails(
-    parentFrame,
-    frame.layout,
-    frame.width,
-    frame.height,
-    frame.background
+    sectionFrame,
+    sectionDetails.layout,
+    sectionDetails.width,
+    sectionDetails.height,
+    sectionDetails.background
   );
+  
+  sectionFrame.layoutSizingHorizontal = "FILL"
+  sectionFrame.layoutSizingVertical = "HUG"
 
-  const children = frame.children;
+
+
+  const children = sectionDetails.children;
+  
   for (const childDetails of children) {
+    console.log('Making a child');
     if (
-      childDetails.type === ChildType.FRAME ||
-      childDetails.type === ChildType.TABLE_FRAME
+      childDetails.type === ChildType.FRAME 
     ) {
       const childFrame = figma.createFrame();
-      parentFrame.appendChild(childFrame);
+      sectionFrame.appendChild(childFrame);
       await createFrame(childDetails, childFrame);
+    } else if (childDetails.type === ChildType.COMPONENT) {
+      const childComponent = await createComponent(sectionFrame, childDetails as LLMResponseComponentType);
+      if(childComponent) {
+        sectionFrame.appendChild(childComponent);
+        applyComponentSpecificProperties(childComponent, childDetails as LLMResponseComponentType);
+      }
     }
   }
-  return parentFrame;
 };
 
 
 const createFrame = async (frameData: LLMResponseFrameType, currFrame: FrameNode) => {
+  console.log('Creating frame');
   if(frameData.type === ChildType.TABLE_FRAME) {
     currFrame.layoutMode = "HORIZONTAL";
     currFrame.layoutSizingHorizontal = "FILL";

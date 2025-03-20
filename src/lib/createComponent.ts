@@ -11,17 +11,16 @@ const createComponent = async (
 ) => {
   try {
     await loadInterFonts();
-
-    console.log('Creating component', component.componentName);
-
     if (component.componentName === 'Text') {
       const textNode = await createText(component);
       parentFrame.appendChild(textNode);
       return;
     }
-
+    
+    console.log('component name ---', component.componentName);
     const key = component.key;
-    const importedComponent = await figma.importComponentByKeyAsync(key);
+    const importedComponent = await figma.importComponentByKeyAsync(component.componentName == "Chart" ? "7725fccd3bc1e83ffe71e761fb10ce41d40b44c8" : key);
+    if(component.componentName == "Chart") console.log('importedComponent', importedComponent);
     if (!importedComponent) {
       console.error(`Component not found for key: ${key}`);
       return null;
@@ -32,8 +31,7 @@ const createComponent = async (
 
     switch (component.componentName) {
       case "Chart":
-        console.log('Reached here', component);
-        createChart(instance, component);
+        createChartv2(instance, component);
         break;
       case 'Button':
         createButton(instance, component);
@@ -47,7 +45,6 @@ const createComponent = async (
       case 'InputField':
         createInputField(instance, component);
         break;
-
       case "Tag":
         createTag(instance, component);
         break;
@@ -55,13 +52,12 @@ const createComponent = async (
       case "Tabs":
         createTabs(instance, component);
         break;
-
-
     }
 
     return instance;
   } catch (error) {
     console.error('Error creating component:', error);
+    console.log('Error', error);
     return null;
   }
 };
@@ -78,12 +74,13 @@ export const createText = async (component: LLMResponseComponentType) => {
   return text;
 };
 
-
-const createChart = (
+const createChartv2 = (
   instance: InstanceNode,
   component: LLMResponseComponentType
 ) => {
   console.log('Creating chart', component);
+  instance.layoutSizingHorizontal = "FILL"
+
 }
 
 const createTabs = (
@@ -119,7 +116,6 @@ const createInputField = (
   component: LLMResponseComponentType
 ) => {
   console.log('Creating input field', component.componentName);
-  
 };
 
 export default createComponent;
