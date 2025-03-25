@@ -1,203 +1,239 @@
 <!doctype html>
 <html>
-  <head>
-    <style>
-      :root {
-        --figma-color-bg: var(--figma-color-bg-default, #ffffff);
-        --figma-color-text: var(--figma-color-text, #333333);
-        --figma-color-border: var(--figma-color-border, #3d3d3d);
-        --figma-color-primary: var(--figma-color-bg-brand, #18a0fb);
-        --figma-color-primary-hover: var(--figma-color-bg-brand-hover, #0d8de3);
-        --figma-color-secondary: var(--figma-color-bg-secondary, #f5f5f5);
-      }
 
-      body {
-        font-family: Inter, sans-serif;
-        padding: 20px;
-        margin: 0;
-        background-color: var(--figma-color-bg);
-        color: var(--figma-color-text);
-      }
-      .container {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
-      .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-      label {
-        font-size: 12px;
-        font-weight: 500;
-        color: var(--figma-color-text);
-      }
-      textarea {
-        padding: 8px;
-        border: 1px solid #b0b0b0;
-        border-radius: 4px;
-        font-size: 14px;
-        min-height: 80px;
-        resize: vertical;
-        background-color: var(--figma-color-bg);
-        color: var(--figma-color-text);
-      }
-      button {
-        background: var(--figma-color-primary);
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: 500;
-      }
-      button:hover {
-        background: var(--figma-color-primary-hover);
-      }
-      #status {
-        color: var(--figma-color-text);
-        opacity: 0.8;
-        font-size: 14px;
-      }
-      .toggle-container {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-      .toggle-switch {
-        position: relative;
-        display: inline-block;
-        width: 36px;
-        height: 20px;
-      }
-      .toggle-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-      }
-      .toggle-slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #c4c4c4;
-        transition: 0.4s;
-        border-radius: 20px;
-      }
-      .toggle-slider:before {
-        position: absolute;
-        content: '';
-        height: 16px;
-        width: 16px;
-        left: 2px;
-        bottom: 2px;
-        background-color: white;
-        transition: 0.4s;
-        border-radius: 50%;
-      }
-      input:checked + .toggle-slider {
-        background-color: var(--figma-color-primary);
-      }
-      input:checked + .toggle-slider:before {
-        transform: translateX(16px);
-      }
-      .toggle-label {
-        font-size: 12px;
-        color: var(--figma-color-text);
-      }
-      h3 {
-        margin: 0;
-        color: var(--figma-color-text);
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <h3>AI Design Assistant</h3>
+<head>
+  <style>
+    :root {
+      --figma-color-bg: var(--figma-color-bg-default, #ffffff);
+      --figma-color-text: var(--figma-color-text, #333333);
+      --figma-color-border: var(--figma-color-border, #3d3d3d);
+      --figma-color-primary: var(--figma-color-bg-brand, #18a0fb);
+      --figma-color-primary-hover: var(--figma-color-bg-brand-hover, #0d8de3);
+      --figma-color-secondary: var(--figma-color-bg-secondary, #f5f5f5);
+    }
 
-      <form id="designForm" class="form-group">
-        <label for="prompt">Design Prompt</label>
-        <textarea
-          id="prompt"
-          placeholder="Describe the design you want to generate..."
-          autofocus
-        ></textarea>
+    body {
+      font-family: Inter, sans-serif;
+      padding: 20px;
+      margin: 0;
+      background-color: var(--figma-color-bg);
+      color: var(--figma-color-text);
+    }
 
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--figma-color-text);
+    }
+
+    textarea {
+      padding: 8px;
+      border: 1px solid #b0b0b0;
+      border-radius: 4px;
+      font-size: 14px;
+      min-height: 80px;
+      resize: vertical;
+      background-color: var(--figma-color-bg);
+      color: var(--figma-color-text);
+    }
+
+    button {
+      background: var(--figma-color-primary);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    button:hover {
+      background: var(--figma-color-primary-hover);
+    }
+
+    #status {
+      color: var(--figma-color-text);
+      opacity: 0.8;
+      font-size: 14px;
+    }
+
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #c4c4c4;
+      transition: 0.4s;
+      border-radius: 20px;
+    }
+
+    .toggle-slider:before {
+      position: absolute;
+      content: '';
+      height: 16px;
+      width: 16px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+
+    input:checked+.toggle-slider {
+      background-color: var(--figma-color-primary);
+    }
+
+    input:checked+.toggle-slider:before {
+      transform: translateX(16px);
+    }
+
+    .toggle-label {
+      font-size: 12px;
+      color: var(--figma-color-text);
+    }
+
+    h3 {
+      margin: 0;
+      color: var(--figma-color-text);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h3>AI Design Assistant</h3>
+
+    <form id="designForm" class="form-group">
+      <label for="prompt">Design Prompt</label>
+      <textarea id="prompt" placeholder="Describe the design you want to generate..." autofocus></textarea>
+
+      <div class="button-group" style="display: flex; gap: 8px;">
         <button type="submit" id="generateBtn">Generate Design</button>
-        <div id="status"></div>
+        <button type="button" id="createChartBtn">Create Chart</button>
+      </div>
+      <div id="status"></div>
 
-        <p>1. Create a dashboard with a chart component</p>
+      <p>1. Create a dashboard with a chart component</p>
 
-        <p>create a dashboard with metrics such as success rate, mrr and also add global filters also add a table relevant to payments data
+      <p>create a dashboard with metrics such as success rate, mrr and also add global filters also add a table relevant
+        to payments data
 
-          also add a chart to show recent business datat trend</p>
+        also add a chart to show recent business datat trend</p>
 
-        <p>create a dashboard with metrics such as success rate, mrr and also add global filters also add a table relevant to payments data
+      <p>create a dashboard with metrics such as success rate, mrr and also add global filters also add a table relevant
+        to payments data
 
-          Make a tabbed interface to show the stats for different types</p>
-        <p>Make a dashboard with a table that has a col and a cell of type tag</p>
-        <p>create a dashboard with a table that has all the possible cell types</p>
+        Make a tabbed interface to show the stats for different types</p>
+      <p>Make a dashboard with a table that has a col and a cell of type tag</p>
+      <p>create a dashboard with a table that has all the possible cell types</p>
 
-        <p>create a table with all types of table cells</p>
+      <p>create a table with all types of table cells</p>
 
-        <p>
-          create a dashboard with metrics such as success rate, mrr and also add
-          global filters also add a table relevant to payments data
-        </p>
+      <p>
+        create a dashboard with metrics such as success rate, mrr and also add
+        global filters also add a table relevant to payments data
+      </p>
 
-        <p>Create a form to collect merchant data to create a new merchant</p>
-        <p>
-          make a dashboard showing a bunch of stat cards to show critical data
-          like mrr ctr etc and a table to show some monthly data
-        </p>
-      </form>
-    </div>
+      <p>Create a form to collect merchant data to create a new merchant</p>
+      <p>
+        make a dashboard showing a bunch of stat cards to show critical data
+        like mrr ctr etc and a table to show some monthly data
+      </p>
+    </form>
+  </div>
 
-    <script>
-      const form = document.getElementById('designForm');
-      const generateBtn = document.getElementById('generateBtn');
-      const promptInput = document.getElementById('prompt');
+  <script>
+    const form = document.getElementById('designForm');
+    const generateBtn = document.getElementById('generateBtn');
+    const createChartBtn = document.getElementById('createChartBtn');
+    const promptInput = document.getElementById('prompt');
 
-      // Add event listener for keydown on the textarea
-      promptInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          form.dispatchEvent(new Event('submit'));
-        }
-      });
-
-      form.onsubmit = (e) => {
+    // Add event listener for keydown on the textarea
+    promptInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        const prompt = document.getElementById('prompt').value;
-        if (!prompt) {
-          prompt =
-            'create a dashboard with metrics such as success rate, mrr and also add global filters also add a table relevant to payments data';
-          // document.getElementById('status').textContent = 'Please enter a design prompt';
-          // return;
-        }
+        form.dispatchEvent(new Event('submit'));
+      }
+    });
 
-        document.getElementById('status').textContent = 'Generating design...';
+    // Add event listener for the Create Chart button
+    createChartBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('status').textContent = 'Creating chart...';
 
-        parent.postMessage(
-          {
-            pluginMessage: {
-              type: 'generate-design',
-              prompt,
-            },
+      parent.postMessage(
+        {
+          pluginMessage: {
+            type: 'create-chart',
           },
-          '*'
-        );
-      };
+        },
+        '*'
+      );
+    });
 
-      window.onmessage = (event) => {
-        const msg = event.data.pluginMessage;
-        if (msg.type === 'status') {
-          document.getElementById('status').textContent = msg.message;
-        }
-      };
-    </script>
-  </body>
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      const prompt = document.getElementById('prompt').value;
+      if (!prompt) {
+        prompt =
+          'create a dashboard with metrics such as success rate, mrr and also add global filters also add a table relevant to payments data';
+        // document.getElementById('status').textContent = 'Please enter a design prompt';
+        // return;
+      }
+
+      document.getElementById('status').textContent = 'Generating design...';
+
+      parent.postMessage(
+        {
+          pluginMessage: {
+            type: 'generate-design',
+            prompt,
+          },
+        },
+        '*'
+      );
+    };
+
+    window.onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      if (msg.type === 'status') {
+        document.getElementById('status').textContent = msg.message;
+      }
+    };
+  </script>
+</body>
+
 </html>

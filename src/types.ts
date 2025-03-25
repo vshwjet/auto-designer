@@ -374,7 +374,7 @@ export interface LLMResponse {
 }
 
 export interface PluginMessage {
-  type: 'generate-design' | 'update-design' | 'cancel';
+  type: 'generate-design' | 'update-design' | 'cancel' | 'create-chart';
   prompt?: string;
   isIncremental?: boolean;
 }

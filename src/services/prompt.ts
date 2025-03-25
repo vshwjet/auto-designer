@@ -361,11 +361,12 @@ Available Components and Their Keys:
    
    Required Properties Format:
    {
-     "Type": "Horizontal" | "Stacked", // IMPORTANT: All stat cards in a design must use the same Type
-     "State": "Uptrend" | "Downtrend",
+     "Type": "Horizontal" | "Stacked" | "Action", // Action type has a button so use it for stat cards that need an action button
+     "State": "Uptrend" | "Downtrend" | "No Trend",
      "Stat Label": "string", // This will be used as the stat card's label
      "Stat Value": "string", // MUST use abbreviated format for large numbers (e.g. "1.2k", "54.3k", "1.2M")
-     "Stat Delta": "string" // This will be used as the percentage value
+     "Stat Delta": "string" // This will be used as the percentage value ( only applicable for State = "No Trend")
+     "Action Button Text": "string" // This will be used as the text of the action button (only applicable for Type = "Action")
    }
    
    Value Abbreviation Rules:
@@ -423,6 +424,10 @@ Available Components and Their Keys:
       - "Cell Content - Text": string - determines the text content of the data cell (applicable only to type:  "cell" and variant: "text")
       - "Cell Content - Alphanumeric": string - determines the date type cell (applicable only to type:  "cell" and variant: "date", eg: "01 Jan, 20:33")
       - "Cell Content - Number": string - determines the amount type cell (applicable only to type:  "cell" and variant: "amount", eg: "₹100.62")
+      
+      When the Table Cell is a tag variant, it must also have the following additional properties:
+      - "Color": "Warning" | "Success" | "Error" | "Info" - determines the color of the tag
+      - "Tag Variant": "Subtle" | "Attentive" | "Outline - determines the variant of the tag
 
       
       Required response type for a Data Table component: 
@@ -878,6 +883,11 @@ for example, if you are creating a table with 3 cols and 3 rows in each column, 
   - Wisely use texts to add section headers, subheaders, captions, text etc to make the design more informative and engaging
   - Always put text nodes inside a frame
   - Always place the tab component in a frame
+
+
+  - for main page header use, 20px, "Semi Bold" and color as #535353
+  - for section headers use, 20px, semibold
+  - for body text, use 16px, medium
   
   Here is a sample response:
 
@@ -920,9 +930,9 @@ for example, if you are creating a table with 3 cols and 3 rows in each column, 
             "y": 100
           },
           "style": {
-            "fontSize": 24,
-            "fontFamily": "Inter",
-            "fontWeight": "Regular", 
+            "fontsize": "24", // font size in string format
+            "fontfamily": "Inter",
+            "fontweight": "Regular", // based on the font weight, use "Semi Bold" for semibold, "Bold" for bold, "Medium" for medium, "Regular" for regular
             "color": {
               "r": 0,
               "g": 0,
@@ -1032,40 +1042,159 @@ Example Response:
 
   Properties for the chart:
   {
-    "Chart Type": "Line" | "Bar",
-    "State": "Default" | "Hover",
+    "Chart Title": "string", // title for the chart (MUST PROVIDE)
+    "Chart Header Subtext": "string", // aditional context for the chart (provided if needed)
+    "Has Subtext": true | false, // whether the chart has a subtext or not, if false, then the chart header subtext MUST not be provided
+    "Chart Type": "Line" | "Bar", // type of chart
     "Data Point": "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10", // number of data points in the chart
-    "Y-Axis": "5" | "6" | "7" | "8", // number of lines on the y-axis
-    "X-Axis": "8" | "9" | "10" // for line chart only, number of lines on the x-axis
-    "Has Legend": true | false // whether the chart has a legend or not
-    "Has X-Axis Title": true | false // whether the chart has a title for the x-axis or not
-    "Has Y-Axis Title": true | false // whether the chart has a title for the y-axis or not 
-    "Y-Axis Title": "string" // title for the y-axis
-    "X-Axis Title": "string" // title for the x-axis
+    "State": "Default" | "Hover", // state of the chart
+    "X-Axis": "8" | "9" | "10" | "NA", // number of lines on the x-axis, NA for then type = bar
+    "Y-Axis": "5" | "6" | "7" | "8" | "NA", // number of lines on the y-axis
+    "X-Axis Title": "string", // title for the x-axis
+    "Y-Axis Title": "string", // title for the y-axis
   }
 
   for the chart, repond in the following format:
   {
     "type": "COMPONENT",
     "componentName": "Chart",
-    "key": "", // key for the chart
+    "key": "",
     "properties": {
+      "Chart Title": "string",
+      "Chart Header Subtext": "string",
+      "Has Subtext": true | false,
       "Chart Type": "Line" | "Bar",
+      "Data Point": "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10",
       "State": "Default" | "Hover",
-      "Data Point": "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10", // number of data points in the chart
-      "Y-Axis": "5" | "6" | "7" | "8", // number of lines on the y-axis
-      "X-Axis": "8" | "9" | "10" // for line chart only, number of lines on the x-axis
-      "Has Legend": true | false // whether the chart has a legend or not
-      "Has X-Axis Title": true | false // whether the chart has a title for the x-axis or not
-      "Has Y-Axis Title": true | false // whether the chart has a title for the y-axis or not 
-      "Y-Axis Title": "string" // title for the y-axis
-      "X-Axis Title": "string" // title for the x-axis
+      "X-Axis": "8" | "9" | "10" | "NA",
+      "Y-Axis": "5" | "6" | "7" | "8" | "NA",
+      "X-Axis Title": "string",
+      "Y-Axis Title": "string"
     }
   }
 
 
   Use this as the component keys for the chart:
-  Chart Type=Line, State=Default, Data Point=1, Y-Axis=5, X-Axis=8: 3961e8bf50f6cc7f5dcd9c4b66652f20e67627f3
+    Chart Type=Line, State=Default, Data Point=1, Y-Axis=5, X-Axis=8: 3961e8bf50f6cc7f5dcd9c4b66652f20e67627f3
+    Chart Type=Line, State=Default, Data Point=1, Y-Axis=5, X-Axis=9: 199b58cffe2f4573450ecf788723ca08216692e1
+    Chart Type=Line, State=Default, Data Point=1, Y-Axis=5, X-Axis=10: 16cb2818a37ff09c260a86763804748d1ab1ece6
+    Chart Type=Line, State=Default, Data Point=1, Y-Axis=6, X-Axis=8: b0c5f79e150b813af8bfeac9b724973d0ed1b387
+    Chart Type=Line, State=Default, Data Point=1, Y-Axis=7, X-Axis=8: 3394d2986269e78aa5dee7302771d335e2f352e9
+    Chart Type=Line, State=Default, Data Point=1, Y-Axis=8, X-Axis=8: e9cfa97dc0b8789b9097715a7320ea8dedc1245a
+    Chart Type=Line, State=Default, Data Point=1, Y-Axis=6, X-Axis=9: 1410691e6dd6d01fa4d389b41562e931704069b8
+    Chart Type=Line, State=Default, Data Point=1, Y-Axis=7, X-Axis=9: 12d3cde68941196eab879224c93490fc3869614a
+    Chart Type=Line, State=Default, Data Point=1, Y-Axis=8, X-Axis=9: 776c0ba838a28ee23c6d98112a5e587cf7faa9e3
+    Chart Type=Line, State=Default, Data Point=1, Y-Axis=6, X-Axis=10: 487194bc7f31adb341bd2b437791e0479c5979fe
+    Chart Type=Line, State=Default, Data Point=1, Y-Axis=7, X-Axis=10: c3a1a1bda9927f20079c2ea21bc3820299c80d14
+    Chart Type=Line, State=Default, Data Point=1, Y-Axis=8, X-Axis=10: 32686c25f23ce40128d126c9912867b9054a3c98
+    Chart Type=Line, State=Default, Data Point=2, Y-Axis=5, X-Axis=10: 306a0c021fa49ef9bd103cd950bc48cab040a567
+    Chart Type=Line, State=Default, Data Point=2, Y-Axis=6, X-Axis=10: d97e45f4dafc6bbb4766194dd06edb214fb391ce
+    Chart Type=Line, State=Default, Data Point=2, Y-Axis=5, X-Axis=9: 2b078feb23f630fff1b4df33640a10fd2cbc889f
+    Chart Type=Line, State=Default, Data Point=2, Y-Axis=6, X-Axis=9: d806bb7de510f31df57034d409e8bda33321b6ca
+    Chart Type=Line, State=Default, Data Point=2, Y-Axis=7, X-Axis=9: 371d60c371074b3d4715e2f96f49aaedea959fe7
+    Chart Type=Line, State=Default, Data Point=2, Y-Axis=7, X-Axis=10: 8ebb0f51c07ad99839731622a06b4060af5ea570
+    Chart Type=Line, State=Default, Data Point=2, Y-Axis=8, X-Axis=9: 9b1160d72ae4cbdc935193426cb888a89309f0e1
+    Chart Type=Line, State=Default, Data Point=2, Y-Axis=8, X-Axis=10: 927553f8681d64c71f853109271ba7ae18919bb0
+    Chart Type=Line, State=Default, Data Point=2, Y-Axis=5, X-Axis=8: 3cb88643ff9521066aaf87b64d9dabbfda3cdefa
+    Chart Type=Line, State=Default, Data Point=2, Y-Axis=6, X-Axis=8: 9089b57aad9e4501427aafdbbc9344520199762d
+    Chart Type=Line, State=Default, Data Point=2, Y-Axis=7, X-Axis=8: 4790607b93719aaeb84d148d78326f8d68f9f6ee
+    Chart Type=Line, State=Default, Data Point=2, Y-Axis=8, X-Axis=8: ccfdd1e804dd7ee5529c356a7cf7023cae27efeb
+    Chart Type=Line, State=Default, Data Point=3, Y-Axis=5, X-Axis=10: e572ba122059dffca55fbab9fae5f2ded7c74292
+    Chart Type=Line, State=Default, Data Point=3, Y-Axis=6, X-Axis=10: 5ba719ff838a1ae46aa905962ec3998dac36f388
+    Chart Type=Line, State=Default, Data Point=3, Y-Axis=5, X-Axis=9: a5e7eec708f4819523df5e0a8b26b6df97a637e1
+    Chart Type=Line, State=Default, Data Point=3, Y-Axis=6, X-Axis=9: dd8fcda75b4b3c97769ca317d456e19a8f5bd822
+    Chart Type=Line, State=Default, Data Point=3, Y-Axis=7, X-Axis=9: d0d7792a3fdd3cfeb6eaf1d6b505ea10181745f5
+    Chart Type=Line, State=Default, Data Point=3, Y-Axis=7, X-Axis=10: 029ca5ddf3dd0d7e4cab5a0c275beafbc16dce22
+    Chart Type=Line, State=Default, Data Point=3, Y-Axis=8, X-Axis=9: 03b283d6c2521e03a0b13a8a1b203950ccfc04fd
+    Chart Type=Line, State=Default, Data Point=3, Y-Axis=8, X-Axis=10: c95caf744865ef0723408975ae43dc442708b5b0
+    Chart Type=Line, State=Default, Data Point=3, Y-Axis=5, X-Axis=8: 96589c7cd117d79075a6f1adae936c3b7d0e6fe2
+    Chart Type=Line, State=Default, Data Point=3, Y-Axis=6, X-Axis=8: f0bb668a5aec53c49e22b4e9a65c811ccdbf0237
+    Chart Type=Line, State=Default, Data Point=3, Y-Axis=7, X-Axis=8: d575a256e7e3c5367c3b17df9c33a5fa8c7653c2
+    Chart Type=Line, State=Default, Data Point=3, Y-Axis=8, X-Axis=8: 3a8d31f2c3b90be0e9f8e66b11ef82bf14b86fb1
+    Chart Type=Line, State=Default, Data Point=4, Y-Axis=5, X-Axis=10: 13ae84d9b1bc8fb33aa27ccb2875bf1debe87dfd
+    Chart Type=Line, State=Default, Data Point=4, Y-Axis=6, X-Axis=10: 1c0e5bb71c17ed8db0cfbab970336530fd90a6a8
+    Chart Type=Line, State=Default, Data Point=4, Y-Axis=5, X-Axis=9: a807c7941a2f9037a36f7b876b470b41908f8d2b
+    Chart Type=Line, State=Default, Data Point=4, Y-Axis=6, X-Axis=9: 45194687d3472182236ec0c652a6026277bf5a1a
+    Chart Type=Line, State=Default, Data Point=4, Y-Axis=7, X-Axis=9: fcd4d54cc6d31a8f4f1d4f78eae606bbf9560895
+    Chart Type=Line, State=Default, Data Point=4, Y-Axis=7, X-Axis=10: c2e24e45e8d1ec5955e14524d8d1a56135a34946
+    Chart Type=Line, State=Default, Data Point=4, Y-Axis=8, X-Axis=9: b24f0bf2421877f6a77f144f2279a55cbec280c1
+    Chart Type=Line, State=Default, Data Point=4, Y-Axis=8, X-Axis=10: 4fb8762ebbaabdb13af9770a9109bf81dc95f40a
+    Chart Type=Line, State=Default, Data Point=4, Y-Axis=5, X-Axis=8: 989feeca0ecc08bb5c680ca979c581a3add0b946
+    Chart Type=Line, State=Default, Data Point=4, Y-Axis=6, X-Axis=8: 0dcbd75c416d133d5b6b833a9d993c98ddb69eaa
+    Chart Type=Line, State=Default, Data Point=4, Y-Axis=7, X-Axis=8: ae274009e7e9094de7bbdde0abf7bf725673cba5
+    Chart Type=Line, State=Default, Data Point=4, Y-Axis=8, X-Axis=8: 45187f28b595bfe91bc3fbc601fe311ade0a74dc
+    Chart Type=Line, State=Default, Data Point=5, Y-Axis=5, X-Axis=10: 3977a8af2cb5de547c14522ccbf86f55ad7cb5e3
+    Chart Type=Line, State=Default, Data Point=5, Y-Axis=6, X-Axis=10: e69b5bb9bafba7b23172aad4e92ed6a75ba1cf29
+    Chart Type=Line, State=Default, Data Point=5, Y-Axis=5, X-Axis=9: 0bb54e0c22cb24c8b0b6754d135ee4b1a0ab8f72
+    Chart Type=Line, State=Default, Data Point=5, Y-Axis=6, X-Axis=9: e7e1baf50051cbc615a12911f322f622b9f0280b
+    Chart Type=Line, State=Default, Data Point=5, Y-Axis=7, X-Axis=9: 87524d4963fc628c92f72e97d45ab1e8e6bab44e
+    Chart Type=Line, State=Default, Data Point=5, Y-Axis=7, X-Axis=10: 7bb3c8d3ead1a77e06e3dc9f0d3190504c777e7a
+    Chart Type=Line, State=Default, Data Point=5, Y-Axis=8, X-Axis=9: 285fc39fba0f5d0bcfb0f227e6d2e65172992f33
+    Chart Type=Line, State=Default, Data Point=5, Y-Axis=8, X-Axis=10: 489eb82414603b20aecfa3334ab30c2c46c23ca4
+    Chart Type=Line, State=Default, Data Point=5, Y-Axis=5, X-Axis=8: cf285899a03284da540395d2346b3f852d21d5ad
+    Chart Type=Line, State=Default, Data Point=5, Y-Axis=6, X-Axis=8: 5c87af7941d3ff1fe4f067b51987ae931d120119
+    Chart Type=Line, State=Default, Data Point=5, Y-Axis=7, X-Axis=8: a60558319717ac2cdd6fb4bad0192d3ac052c245
+    Chart Type=Line, State=Default, Data Point=5, Y-Axis=8, X-Axis=8: 429631542a42302c32c45290187cad6df96ec70d
+    Chart Type=Line, State=Default, Data Point=6, Y-Axis=5, X-Axis=10: 24e789903a6edfcee648abfa6d7a33327153a2ca
+    Chart Type=Line, State=Default, Data Point=6, Y-Axis=6, X-Axis=10: 5d745cea3760dadff07dbf83502d71cd9471eeb6
+    Chart Type=Line, State=Default, Data Point=6, Y-Axis=5, X-Axis=9: 05dcc24861eb180e54ba57997018b58705467a86
+    Chart Type=Line, State=Default, Data Point=6, Y-Axis=6, X-Axis=9: 6a31409cdf481be83c8dc16c9f76de9df2ff3593
+    Chart Type=Line, State=Default, Data Point=6, Y-Axis=7, X-Axis=9: a2f6699202fced245a499402091d65b36338a489
+    Chart Type=Line, State=Default, Data Point=6, Y-Axis=7, X-Axis=10: af7dcac0867572e853994b13e3132770c10ca7f8
+    Chart Type=Line, State=Default, Data Point=6, Y-Axis=8, X-Axis=9: 45f0d485be9c46c0c4d374ed6f1d6aa4d5de2ed0
+    Chart Type=Line, State=Default, Data Point=6, Y-Axis=8, X-Axis=10: 3efa11c8fe4cbbe611882c0dbc2855c7d7a4f0f4
+    Chart Type=Line, State=Default, Data Point=6, Y-Axis=5, X-Axis=8: 2ff9eb2a2535c14d1b5e4cc54ad05efbd28dd814
+    Chart Type=Line, State=Default, Data Point=6, Y-Axis=6, X-Axis=8: 4fb6b7195907d53139c7e4d1dc9df42818d2353b
+    Chart Type=Line, State=Default, Data Point=6, Y-Axis=7, X-Axis=8: 394f9cb846b67bde9b3f637817b6302ecb7989ff
+    Chart Type=Line, State=Default, Data Point=6, Y-Axis=8, X-Axis=8: 3387b1bce36c76bece319c73e4a2f9d2987a6806
+    Chart Type=Line, State=Default, Data Point=7, Y-Axis=5, X-Axis=10: ff6332649b7aabcf833e185e22ad91fa296146e9
+    Chart Type=Line, State=Default, Data Point=7, Y-Axis=6, X-Axis=10: 6af1f5ff070643dc23a7d0d538a981e6351be662
+    Chart Type=Line, State=Default, Data Point=7, Y-Axis=5, X-Axis=9: e946711379513d7a122954ba45f9a02808061f53
+    Chart Type=Line, State=Default, Data Point=7, Y-Axis=6, X-Axis=9: be7e293e3ed8ccc6cf0c137fea1fec458b7d1cac
+    Chart Type=Line, State=Default, Data Point=7, Y-Axis=7, X-Axis=9: 6f394322023ea1f0c328aa0ac9800bca30e996c8
+    Chart Type=Line, State=Default, Data Point=7, Y-Axis=7, X-Axis=10: 0980eb5b5d38ed7b2459c527259ce4d8c59eea55
+    Chart Type=Line, State=Default, Data Point=7, Y-Axis=8, X-Axis=9: e50824b83d69b99720c5046eef9c0fab7324bfda
+    Chart Type=Line, State=Default, Data Point=7, Y-Axis=8, X-Axis=10: b52711aefba5ffbb6c50e0123c87494c788e2544
+    Chart Type=Line, State=Default, Data Point=7, Y-Axis=5, X-Axis=8: 70c287638b604922e7853d1582ff4d34a54683b5
+    Chart Type=Line, State=Default, Data Point=7, Y-Axis=6, X-Axis=8: d547cdeca681ba128bd0736f5ac2453894f46356
+    Chart Type=Line, State=Default, Data Point=7, Y-Axis=7, X-Axis=8: e226226c2c939023770da6813cc95a7bcbd74e00
+    Chart Type=Line, State=Default, Data Point=7, Y-Axis=8, X-Axis=8: f0602f614e5cee0393cc7ee207e361907f5cde3d
+    Chart Type=Line, State=Default, Data Point=8, Y-Axis=5, X-Axis=10: 014a1db1932ec430fd8b5b39d7d74260d54df9d7
+    Chart Type=Line, State=Default, Data Point=8, Y-Axis=6, X-Axis=10: 2fb8ebcc23545e0bcf7cf97e2e18db6490fe26ae
+    Chart Type=Line, State=Default, Data Point=8, Y-Axis=5, X-Axis=9: 95192d7684a34e4b028583d5643ce51690deb17f
+    Chart Type=Line, State=Default, Data Point=8, Y-Axis=6, X-Axis=9: 5004db7ae11889f62b72f83b57cd8a959f20c861
+    Chart Type=Line, State=Default, Data Point=8, Y-Axis=7, X-Axis=9: badf4e8406fa70dd457bc604c15e5e992b6f46ef
+    Chart Type=Line, State=Default, Data Point=8, Y-Axis=7, X-Axis=10: d7a641ed6e1003c2d1d4a37c5d778f84f0b350bd
+    Chart Type=Line, State=Default, Data Point=8, Y-Axis=8, X-Axis=9: a842aff8f9a80db081211f336566d214102c2f28
+    Chart Type=Line, State=Default, Data Point=8, Y-Axis=8, X-Axis=10: 1facd6e001cd4144a0e4d2c8209b6ad650ddb72c
+    Chart Type=Line, State=Default, Data Point=8, Y-Axis=5, X-Axis=8: 70c7a2d4ac3f7e48f8494cf99a00625cdeb9d860
+    Chart Type=Line, State=Default, Data Point=8, Y-Axis=6, X-Axis=8: d650b4b95fe180b5c62454e36a86f4b6e163ad99
+    Chart Type=Line, State=Default, Data Point=8, Y-Axis=7, X-Axis=8: f4d47c7bbc38b89e6680aac6972b5c5914f1cb79
+    Chart Type=Line, State=Default, Data Point=8, Y-Axis=8, X-Axis=8: deeb1ba129ce8fa3a4455e8cbd59927ee295bdb3
+    Chart Type=Line, State=Default, Data Point=9, Y-Axis=5, X-Axis=10: 7b5a81106313fe3672d36a221b7d9daa3ec23d9c
+    Chart Type=Line, State=Default, Data Point=9, Y-Axis=6, X-Axis=10: cd5ecf6f34aae5925f0f60f5a6ae44a7acfd09f3
+    Chart Type=Line, State=Default, Data Point=9, Y-Axis=5, X-Axis=9: fe0aa14427d2367379c652bb5f83705e829a8834
+    Chart Type=Line, State=Default, Data Point=9, Y-Axis=6, X-Axis=9: c0864013f58ab274c1f220bb045d4a29a8ffe1f2
+    Chart Type=Line, State=Default, Data Point=9, Y-Axis=7, X-Axis=9: 9923c1852930e9cd85c40e8cb6760660e0757f8e
+    Chart Type=Line, State=Default, Data Point=9, Y-Axis=7, X-Axis=10: 22d0b8a2034a6b9389e0b429d831d518a496f25d
+    Chart Type=Line, State=Default, Data Point=9, Y-Axis=8, X-Axis=9: 98b656d3291acff3be152cdb417002e7473f8576
+    Chart Type=Line, State=Default, Data Point=9, Y-Axis=8, X-Axis=10: 53be353847da9097e2d2600faaf73f9965b396aa
+    Chart Type=Line, State=Default, Data Point=9, Y-Axis=5, X-Axis=8: 91de722feb50f55da21fdb28eeea8854722cff67
+    Chart Type=Line, State=Default, Data Point=9, Y-Axis=6, X-Axis=8: 1350129d016eab3dc751b1617c48c37e7d44a144
+    Chart Type=Line, State=Default, Data Point=9, Y-Axis=7, X-Axis=8: 5b2dcaaf1187d5f1c524f330ac1e19b0e8f0bfe2
+    Chart Type=Line, State=Default, Data Point=9, Y-Axis=8, X-Axis=8: 572d6d7a18f3803d683f385280e7c0b6f36c3367
+    Chart Type=Line, State=Default, Data Point=10, Y-Axis=5, X-Axis=10: 420dcfef8ae14543b36d6b08a1f7407be7d1b384
+    Chart Type=Line, State=Default, Data Point=10, Y-Axis=6, X-Axis=10: 2419382cec6d6cef6b49e6eeb58bf0f68df2a589
+    Chart Type=Line, State=Default, Data Point=10, Y-Axis=5, X-Axis=9: 8f88c58e73bdcc03d2645d09c533dd9e24c8285d
+    Chart Type=Line, State=Default, Data Point=10, Y-Axis=6, X-Axis=9: 22c2c8ea049f5996fb9e8a894fa6c741eafa3cae
+    Chart Type=Line, State=Default, Data Point=10, Y-Axis=7, X-Axis=9: 7fa40bd77bbd4e57d35371a8b01e5c4f4df141b6
+    Chart Type=Line, State=Default, Data Point=10, Y-Axis=7, X-Axis=10: fdee51b781ec8aaaf8fa8eb76456beae7056d832
+    Chart Type=Line, State=Default, Data Point=10, Y-Axis=8, X-Axis=9: bbdf865fb9647c6244db9ef07a558bd24e688a12
+    Chart Type=Line, State=Default, Data Point=10, Y-Axis=8, X-Axis=10: b114502b32e7a2b2c6f5a17969ca7725aec33c5a
+    Chart Type=Line, State=Default, Data Point=10, Y-Axis=5, X-Axis=8: 97f239c45ed19a7e89839abcc2aa65fdaabc538f
+    Chart Type=Line, State=Default, Data Point=10, Y-Axis=6, X-Axis=8: 48c6d2dd03750fd72b3da5ad989f0470ba9841fa
+    Chart Type=Line, State=Default, Data Point=10, Y-Axis=7, X-Axis=8: d436df66a2f50f9ad66b406278806a69fd02f583
+    Chart Type=Line, State=Default, Data Point=10, Y-Axis=8, X-Axis=8: 43ce94f26510035a83d52940546d15fb77f5595a
   
 
 REMEMBER: Your response must be ONLY a valid JSON object following the format shown above. Do not include any additional text, explanations, or markdown formatting. Make sure to not include any comments in the response.`;
