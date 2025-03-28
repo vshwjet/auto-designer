@@ -14,10 +14,21 @@ const createSingleStatCard = (
     "Type": component.properties['Type'] || 'horizontal'
   });
 
-  if (component.properties['Type'] === 'action') {
-    instance.setProperties({
-      "Action Button Text#9995:0": component.properties['Action Button Text'] || 'Action Button Text'
-    });
+  if (component.properties['Type'] === 'Action') {
+    // const actionButton = instance.findOne(node => node.name === "Button") as InstanceNode;
+    const actionButton = instance.findOne(node => node.name === "Button") as InstanceNode;
+    if(actionButton){
+      actionButton.setProperties({
+        "Button Text#9995:0": component.properties['Action Button Text'] || 'Action Button Text',
+        "Has Leading Icon#9995:484": false
+      })
+    }
+    // if(actionButton){
+    //   actionButton.setProperties({
+    //     "Button Text#9995:0": component.properties['Action Button Text'] || 'Action Button Text',
+    //     "Has Leading Icon#9995:484": "false"
+    //   })
+    // }
   }
 
 

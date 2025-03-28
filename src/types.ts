@@ -373,11 +373,13 @@ export interface LLMResponse {
   frame: Frame;
 }
 
-export interface PluginMessage {
-  type: 'generate-design' | 'update-design' | 'cancel' | 'create-chart';
-  prompt?: string;
-  isIncremental?: boolean;
-}
+export type PluginMessage = 
+  | { type: 'generate-design'; prompt: string }
+  | { type: 'update-design'; prompt: string }
+  | { type: 'cancel' }
+  | { type: 'create-chart' }
+  | { type: 'save-prompt'; prompt: string }
+  | { type: 'get-prompts' };
 
 export interface DesignState {
   currentFrame: Frame | null;

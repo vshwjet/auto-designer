@@ -1,4 +1,4 @@
-import { LLMResponse, Frame } from '../types';
+import { Frame } from '../types';
 import systemPrompt from './prompt';
 
 const config = {

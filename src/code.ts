@@ -1,15 +1,16 @@
 /// <reference types="@figma/plugin-typings" />
 
 figma.showUI(__html__, {
-  width: 400,
-  height: 500,
+  width: 500,
+  height: 300,
   themeColors: true,
+  title: "Figmate"
 });
 
 import { createParentFrame } from './lib/createFlow';
+import { delay } from './lib/utils';
 import { generateDesign } from './services/openai';
 import { PluginMessage } from './types';
-import { ChildType, LLMResponseFrameType, LLMResponseType } from './types/llmResponseType';
 
 function parseNumberedList(input: string): string[] {
   return input
@@ -36,24 +37,141 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
         artboard.name = 'Flow';
         artboard.layoutMode = 'VERTICAL';
 
-        // Add a delay function
-        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+        
 
         for (const prompt of prompts) {
           const designSpec: any = await generateDesign(prompt);
-          const flowDetails = designSpec.flows[0];
+          const flowDetails = designSpec.section;
 
           await createParentFrame(flowDetails, artboard);
 
           await delay(3000);
           console.log('Getting next prompt response');
         }
+
+        // Scroll to the generated content after completion
+        figma.viewport.scrollAndZoomIntoView([artboard]);
+
+        await savePrompt(msg.prompt);
+        figma.notify('Design generation completed!', {timeout: 1000});
+        break;
+      case 'save-prompt':
+        await savePrompt(msg.prompt);
+        break;
+      case 'get-prompts':
+        const savedPrompts = await getSavedPrompts();
+        figma.ui.postMessage({ type: 'saved-prompts', prompts: savedPrompts });
         break;
       case 'cancel':
         figma.closePlugin();
         break;
       case 'create-chart':
 
+        // action stat card
+        // createInstance("e65e73efaa3409f22911401412152d8e46593643");
+
+        // button
+        // createInstance("c51d18f7addda3a79d26c31ce33d0d7d394a50cf");
+
+        // advert card
+        // createInstance("8da576d58256bec6595649022b5c864d39d862ee");
+
+        //input field
+        createInstance("8b7de6b46a9f5382402012f5c8613936d5206669");
+        break;
+    }
+  } catch (error) {
+    console.error('Failed to generate design:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    figma.notify('Failed to generate design: ' + errorMessage, { error: true });
+  }
+};
+
+async function savePrompt(prompt: string) {
+  let prompts = await figma.clientStorage.getAsync("userPrompts") || [];
+  if (!Array.isArray(prompts)) {
+    prompts = [];
+  }
+  prompts.push(prompt);
+
+  await figma.clientStorage.setAsync("userPrompts", prompts);
+  console.log("Prompt saved:", prompt);
+}
+
+async function getSavedPrompts() {
+  const prompts = await figma.clientStorage.getAsync("userPrompts") || [];
+  console.log("Saved Prompts:", prompts);
+  return prompts;
+}
+
+
+const createInstance = async (key: string) => {
+  const parentFrame = figma.createFrame();
+  parentFrame.resize(1726, 1080);
+  parentFrame.layoutMode = "VERTICAL";
+  parentFrame.layoutSizingHorizontal = "HUG";
+  parentFrame.paddingTop = 100;
+  parentFrame.paddingRight = 100;
+  parentFrame.paddingBottom = 100;
+  parentFrame.paddingLeft = 100;
+  const importedComponent = await figma.importComponentByKeyAsync(key);
+  const instance = importedComponent.createInstance();
+  parentFrame.appendChild(instance);
+
+
+  if(key == "e65e73efaa3409f22911401412152d8e46593643"){
+    console.log('stat card');
+  }
+
+
+  if(key == "e65e73efaa3409f22911401412152d8e46593643"){
+    instance.setProperties({
+      "Type": "Action"
+    })
+    const actionButton = instance.findOne(node => node.name === "Button") as InstanceNode;
+    if(actionButton){
+      actionButton.setProperties({
+        "Button Text#9995:0": "Test", 
+        "Has Leading Icon#9995:484": false
+      })
+    }
+  }
+
+  // Input Field
+  if(key == "8b7de6b46a9f5382402012f5c8613936d5206669"){
+    instance.setProperties({
+      "Label Text#9987:546": "Test",
+      "Text Placeholder#10157:2": "Placeholder",
+      "Hint Text#9987:728": "Hint da text",
+      "Type": "Floating Label - Number"
+    })
+  }
+
+  if(key == "c51d18f7addda3a79d26c31ce33d0d7d394a50cf"){
+    // Button
+    instance.setProperties({
+      "Button Text#9995:0": "Custom Button Text", 
+      "Has Leading Icon#9995:484": false,
+      "Has Trailing Icon#10131:0": false,
+      "Has Text#9995:121": true,
+      "Hirerchey": "Primary",
+      "Size": "small",
+      "State": "Default",
+      "Type": "Solid Fill",
+      "Width": "Half"
+    })
+  }
+}
+
+
+// createImageFromUrl("https://i.ibb.co/CKv1sSfT/Screenshot-2025-03-26-at-4-19-21-PM.png", {
+        //   width: 500,
+        //   height: 500,
+        //   cornerRadius: 10,
+        //   name: "Google Logo",
+        //   scaleMode: "FIT"
+        // })
         // const statCardFrame = figma.createFrame();
         // statCardFrame.resize(1726, 1080);
         // statCardFrame.layoutMode = "HORIZONTAL";
@@ -78,29 +196,12 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
 
         // ------------------------------------------------------------
 
-        const res = `{
-    "type": "COMPONENT",
-    "componentName": "Chart",
-    "key": "3961e8bf50f6cc7f5dcd9c4b66652f20e67627f3",
-    "properties": {
-        "Chart Title": "Chart 1",
-        "Chart Header Subtext": "",
-        "Has Subtext": false,
-        "Chart Type": "Line",
-        "Data Point": "1",
-        "State": "Default",
-        "X-Axis": "8",
-        "Y-Axis": "5",
-        "X-Axis Title": "X-Axis 1",
-        "Y-Axis Title": "Y-Axis 1"
-    }
-}`
 
 
         // figma.notify('Chart creation requested');
         // const chartFrame = figma.createFrame();
         // chartFrame.resize(1726, 1080);
-        // chartFrame.layoutMode = "HORIZONTAL";
+        // chartFrame.layoutMode = "VERTICAL";
         // chartFrame.layoutSizingHorizontal = "HUG";
         // figma.currentPage.appendChild(chartFrame);
         // chartFrame.paddingTop = 100;
@@ -114,33 +215,57 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
         // });
 
         // const importedComponent = await figma.importComponentByKeyAsync("d23b37c43e17e6dc198003affcc8a7ba22567863");
-        // const chartInstance = importedComponent.createInstance();
-        // chartFrame.appendChild(chartInstance);
+        // const barChartInstance = importedComponent.createInstance();
+        // chartFrame.appendChild(barChartInstance);
+        // barChartInstance.layoutSizingHorizontal = "FILL";
 
-        // const header = chartInstance.findOne(node => node.name === "Header") as InstanceNode;
+        // const header = barChartInstance.findOne(node => node.name === "Header") as InstanceNode;
         // console.log('header', header);
         // header.setProperties({
         //   "Subtext#27504:335": "sss"
         // })
-        // const dropdown = header.findOne(node => node.name === "Dropdown") as InstanceNode;
-        // const dropdownButton = dropdown.findOne(node => node.name === "Button") as InstanceNode;
-        // dropdownButton.setProperties({
-        //   "Button Text#9995:0": "Jai Shree Ram"
+        // const barChartDropdown = header.findOne(node => node.name === "Dropdown") as InstanceNode;
+        // const barChartDropdownButton = barChartDropdown.findOne(node => node.name === "Button") as InstanceNode;
+        // barChartDropdownButton.setProperties({
+        //   "Button Text#9995:0": "Test"
         // })
 
 
-        // const chartBody = chartInstance.findOne(node => node.name === "Chart Body") as InstanceNode;
+        // const chartBody = barChartInstance.findOne(node => node.name === "Chart Body") as InstanceNode;
+
         // chartBody.setProperties({
-        //   "Chart Type" : "Line",
-        //   "Data Point": "2"
+        //   "Chart Type": "Bar",
+        //   "Data Point": "5",
+        //   "State": "Default",
+        //   "X-Axis": "NA",
+        //   "Y-Axis": "7",
+        //   "X-Axis Text#27504:167": "X-Axis Title",
+        //   "Y-Axis Text#27432:0": "Y-Axis Title",
+        //   "Has Legend#27723:0": false,
+        //   "Has X-Axis Title#27410:25": true,
+        //   "Has Y-Axis Title#27410:0": true,
         // })
 
-        break;
-    }
-  } catch (error) {
-    console.error('Failed to generate design:', error);
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
-    figma.notify('Failed to generate design: ' + errorMessage, { error: true });
-  }
-};
+
+        // const lineChartInstance = importedComponent.createInstance();
+        // chartFrame.appendChild(lineChartInstance);
+        // lineChartInstance.layoutSizingHorizontal = "FILL";
+        // const lineHeader = lineChartInstance.findOne(node => node.name === "Header") as InstanceNode;
+        // lineHeader.setProperties({
+        //   "Subtext#27504:335": "sss"
+        // })
+
+        // const lineChartBody = lineChartInstance.findOne(node => node.name === "Chart Body") as InstanceNode;
+        // listComponentProperties(lineChartBody);
+        // lineChartBody.setProperties({
+        //   // "Chart Type": "Line",
+        //   "Data Point": "5",
+        //   "State": "Default",
+        //   "X-Axis": "8",
+        //   "Y-Axis": "6",
+        //   // "X-Axis Text#27504:167": "X-Axis Title",
+        //   // "Y-Axis Text#27432:0": "Y-Axis Title",
+        //   // "Has Legend#27723:0": true,
+        //   // "Has X-Axis Title#27410:25": true,
+        //   // "Has Y-Axis Title#27410:0": true,
+        // })

@@ -4,12 +4,12 @@
 <head>
   <style>
     :root {
-      --figma-color-bg: var(--figma-color-bg-default, #ffffff);
-      --figma-color-text: var(--figma-color-text, #333333);
-      --figma-color-border: var(--figma-color-border, #3d3d3d);
-      --figma-color-primary: var(--figma-color-bg-brand, #18a0fb);
-      --figma-color-primary-hover: var(--figma-color-bg-brand-hover, #0d8de3);
-      --figma-color-secondary: var(--figma-color-bg-secondary, #f5f5f5);
+      --figma-color-bg: #1e1e1e;
+      --figma-color-text: #e0e0e0;
+      --figma-color-border: #444444;
+      --figma-color-primary: #2a82da;
+      --figma-color-primary-hover: #1f6bb8;
+      --figma-color-secondary: #2c2c2c;
     }
 
     body {
@@ -40,18 +40,18 @@
 
     textarea {
       padding: 8px;
-      border: 1px solid #b0b0b0;
+      border: 1px solid var(--figma-color-border);
       border-radius: 4px;
       font-size: 14px;
       min-height: 80px;
       resize: vertical;
-      background-color: var(--figma-color-bg);
+      background-color: var(--figma-color-secondary);
       color: var(--figma-color-text);
     }
 
     button {
       background: var(--figma-color-primary);
-      color: white;
+      color: #ffffff;
       border: none;
       padding: 8px 16px;
       border-radius: 6px;
@@ -95,7 +95,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: #c4c4c4;
+      background-color: #555555;
       transition: 0.4s;
       border-radius: 20px;
     }
@@ -107,7 +107,7 @@
       width: 16px;
       left: 2px;
       bottom: 2px;
-      background-color: white;
+      background-color: #cccccc;
       transition: 0.4s;
       border-radius: 50%;
     }
@@ -129,52 +129,51 @@
       margin: 0;
       color: var(--figma-color-text);
     }
+    
+    #savedPromptsList{
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 
 <body>
   <div class="container">
-    <h3>AI Design Assistant</h3>
-
     <form id="designForm" class="form-group">
       <label for="prompt">Design Prompt</label>
       <textarea id="prompt" placeholder="Describe the design you want to generate..." autofocus></textarea>
-
       <div class="button-group" style="display: flex; gap: 8px;">
         <button type="submit" id="generateBtn">Generate Design</button>
-        <button type="button" id="createChartBtn">Create Chart</button>
+        <button type="button" id="createChartBtn">Create</button>
       </div>
       <div id="status"></div>
 
-      <p>1. Create a dashboard with a chart component</p>
-
-      <p>create a dashboard with metrics such as success rate, mrr and also add global filters also add a table relevant
-        to payments data
-
-        also add a chart to show recent business datat trend</p>
-
-      <p>create a dashboard with metrics such as success rate, mrr and also add global filters also add a table relevant
-        to payments data
-
-        Make a tabbed interface to show the stats for different types</p>
-      <p>Make a dashboard with a table that has a col and a cell of type tag</p>
-      <p>create a dashboard with a table that has all the possible cell types</p>
-
-      <p>create a table with all types of table cells</p>
-
-      <p>
-        create a dashboard with metrics such as success rate, mrr and also add
-        global filters also add a table relevant to payments data
-      </p>
-
-      <p>Create a form to collect merchant data to create a new merchant</p>
-      <p>
-        make a dashboard showing a bunch of stat cards to show critical data
-        like mrr ctr etc and a table to show some monthly data
-      </p>
     </form>
-  </div>
 
+    <div id="savedPromptsContainer">
+      <h4>Saved Prompts</h4>
+      <ul id="savedPromptsList"></ul>
+    </div>
+
+
+    <p>1. Add one global filter to select BD Spock
+      2. Add a tab group to select between Portfolio, Potential and Cross Sell
+      3. Add start cards to show ctr, mrr, GMV Processed data etc
+      4. Create a grid to add 4 charts in a 2x2 format
+      5. Add a table to show transaction history, make sure to add a few cols with variant as tag</p>
+    <p>1. Create a dashboard with a chart component</p>
+    <p>Create a dashboard with metrics such as success rate, mrr and also add global filters also add a table relevant
+      to payments data; also add a chart to show recent business data trend</p>
+    <p>Create a dashboard with metrics such as success rate, mrr and also add global filters also add a table relevant
+      to payments data; make a tabbed interface to show the stats for different types</p>
+    <p>Make a dashboard with a table that has a col and a cell of type tag</p>
+    <p>Create a dashboard with a table that has all the possible cell types</p>
+    <p>Create a table with all types of table cells</p>
+    <p>Create a dashboard with metrics such as success rate, mrr and also add
+      global filters also add a table relevant to payments data</p>
+    <p>Create a form to collect merchant data to create a new merchant</p>
+    <p>Make a dashboard showing a bunch of stat cards to show critical data like mrr, ctr etc and a table to show some
+      monthly data</p>
+  </div>
   <script>
     const form = document.getElementById('designForm');
     const generateBtn = document.getElementById('generateBtn');
@@ -193,39 +192,39 @@
     createChartBtn.addEventListener('click', (e) => {
       e.preventDefault();
       document.getElementById('status').textContent = 'Creating chart...';
-
-      parent.postMessage(
-        {
-          pluginMessage: {
-            type: 'create-chart',
-          },
-        },
-        '*'
-      );
+      parent.postMessage({ pluginMessage: { type: 'create-chart' } }, '*');
     });
 
     form.onsubmit = (e) => {
       e.preventDefault();
-      const prompt = document.getElementById('prompt').value;
+      let prompt = document.getElementById('prompt').value;
       if (!prompt) {
-        prompt =
-          'create a dashboard with metrics such as success rate, mrr and also add global filters also add a table relevant to payments data';
-        // document.getElementById('status').textContent = 'Please enter a design prompt';
-        // return;
+        prompt = 'create a dashboard with metrics such as success rate, mrr and also add global filters also add a table relevant to payments data';
       }
-
       document.getElementById('status').textContent = 'Generating design...';
-
-      parent.postMessage(
-        {
-          pluginMessage: {
-            type: 'generate-design',
-            prompt,
-          },
-        },
-        '*'
-      );
+      parent.postMessage({ pluginMessage: { type: 'generate-design', prompt } }, '*');
     };
+
+    // form.onsubmit = (e) => {
+    //   e.preventDefault();
+    //   const prompt = document.getElementById("prompt").value;
+
+    //   parent.postMessage({
+    //     pluginMessage: { type: "save-prompt", prompt }
+    //   }, "*");
+    // };
+
+    window.onload = () => {
+      parent.postMessage({ pluginMessage: { type: "get-prompts" } }, "*");
+    };
+
+    window.onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      if (msg.type === "saved-prompts") {
+        console.log("Loaded Prompts:", msg.prompts);
+      }
+    };
+
 
     window.onmessage = (event) => {
       const msg = event.data.pluginMessage;
@@ -233,6 +232,44 @@
         document.getElementById('status').textContent = msg.message;
       }
     };
+
+    window.onload = () => {
+      parent.postMessage({ pluginMessage: { type: "get-prompts" } }, "*");
+    };
+
+    window.onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+
+      if (msg.type === "saved-prompts") {
+        const savedPromptsList = document.getElementById("savedPromptsList");
+        savedPromptsList.innerHTML = ""; // Clear existing list
+
+        msg.prompts.forEach((prompt) => {
+          const li = document.createElement("li");
+          li.textContent = prompt;
+          savedPromptsList.appendChild(li);
+        });
+      }
+    };
+
+    // Send prompt when user submits
+    // document.getElementById("designForm").onsubmit = (e) => {
+    //   e.preventDefault();
+    //   const prompt = document.getElementById("prompt").value;
+
+    //   parent.postMessage({
+    //     pluginMessage: { type: "save-prompt", prompt }
+    //   }, "*");
+
+    //   // Add it to the UI instantly (Optimistic UI)
+    //   const savedPromptsList = document.getElementById("savedPromptsList");
+    //   const li = document.createElement("li");
+    //   li.textContent = prompt;
+    //   savedPromptsList.appendChild(li);
+
+    //   document.getElementById("prompt").value = ""; // Clear input
+    // };
+
   </script>
 </body>
 

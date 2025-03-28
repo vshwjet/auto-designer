@@ -10,9 +10,12 @@ export const createParentFrame = async (
   sectionDetails: LLMResponseFrameType,
   artboard: FrameNode
 ) => {
-  console.log('Creating parent frame');
   const sectionFrame = figma.createFrame();
+  sectionFrame.name = sectionDetails.name;
   artboard.appendChild(sectionFrame);
+
+  // artboard.primaryAxisAlignItems = sectionDetails.layout?.alignment?.primary;
+  // artboard.counterAxisAlignItems = sectionDetails.layout?.alignment?.counter;
 
   if(sectionDetails.type === ChildType.TABLE_FRAME ){
     sectionFrame.layoutMode = "HORIZONTAL";
@@ -38,9 +41,8 @@ export const createParentFrame = async (
   const children = sectionDetails.children;
   
   for (const childDetails of children) {
-    console.log('Making a child');
     if (
-      childDetails.type === ChildType.FRAME 
+      childDetails.type === ChildType.FRAME || childDetails.type === ChildType.TABLE_FRAME
     ) {
       const childFrame = figma.createFrame();
       sectionFrame.appendChild(childFrame);
@@ -57,7 +59,6 @@ export const createParentFrame = async (
 
 
 const createFrame = async (frameData: LLMResponseFrameType, currFrame: FrameNode) => {
-  console.log('Creating frame');
   if(frameData.type === ChildType.TABLE_FRAME) {
     currFrame.layoutMode = "HORIZONTAL";
     currFrame.layoutSizingHorizontal = "FILL";
@@ -119,6 +120,11 @@ const setFrameLayoutDetails = (
     frame.paddingBottom = layoutDetails.padding.bottom;
     frame.paddingLeft = layoutDetails.padding.left;
     frame.itemSpacing = layoutDetails.itemSpacing;
+  }
+
+  if(layoutDetails?.alignment){
+    frame.primaryAxisAlignItems = layoutDetails.alignment.primary;
+    frame.counterAxisAlignItems = layoutDetails.alignment.counter;
   }
 
   if (backgroundColor) {

@@ -15,5 +15,6 @@ export default function createTag(instance: InstanceNode, component: LLMResponse
     "Type": component.properties['Type'] || 'Pill',
     "Variant": component.properties['Variant'] || 'Subtle',
   }
+
   instance.setProperties(mappedProps);
 }

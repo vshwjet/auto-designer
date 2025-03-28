@@ -28,3 +28,6 @@ export async function loadInterFonts(): Promise<void> {
     fontStyles.map((style) => figma.loadFontAsync({ family: 'Inter', style }))
   );
 }
+
+
+export const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));

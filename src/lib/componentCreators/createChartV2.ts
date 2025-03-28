@@ -96,91 +96,6 @@ const createChartv2 = (
             body.setProperties({ "Chart Type": chartTypeVariant });
             console.log('Set Chart Type to:', chartTypeVariant);
         }
-
-        // Apply chart type
-        //   if (properties["Chart Type"]) {
-        //     const chartTypeVariant = properties["Chart Type"];
-        //     body.setProperties({ "Chart Type": chartTypeVariant });
-        //     console.log('Set Chart Type to:', chartTypeVariant);
-        //   }
-
-        //   // Apply state
-        //   if (properties["State"]) {
-        //     body.setProperties({ "State": properties["State"] });
-        //     console.log('Set State to:', properties["State"]);
-        //   }
-
-        //   // Apply data point
-        //   if (properties["Data Point"]) {
-        //     body.setProperties({ "Data Point": properties["Data Point"] });
-        //     console.log('Set Data Point to:', properties["Data Point"]);
-        //   }
-
-        //   // Apply Y-Axis
-        //   if (properties["Y-Axis"]) {
-        //     body.setProperties({ "Y-Axis": properties["Y-Axis"] });
-        //     console.log('Set Y-Axis to:', properties["Y-Axis"]);
-        //   }
-
-        //   // Apply X-Axis
-        //   if (properties["X-Axis"]) {
-        //     body.setProperties({ "X-Axis Text#27504:167": properties["X-Axis"] });
-        //     console.log('Set X-Axis to:', properties["X-Axis"]);
-        //   }
-
-        //   // Apply Has Legend
-        //   if (properties["Has Legend"] !== undefined) {
-        //     body.setProperties({ "Has Legend": properties["Has Legend"] });
-        //     console.log('Set Has Legend to:', properties["Has Legend"]);
-        //   }
-
-        //   // Apply Has X-Axis Title
-        //   if (properties["Has X-Axis Title"] !== undefined) {
-        //     body.setProperties({ "Has X-Axis Title": properties["Has X-Axis Title"] });
-        //     console.log('Set Has X-Axis Title to:', properties["Has X-Axis Title"]);
-        //   }
-
-        //   // Apply Has Y-Axis Title
-        //   if (properties["Has Y-Axis Title"] !== undefined) {
-        //     body.setProperties({ "Has Y-Axis Title": properties["Has Y-Axis Title"] });
-        //     console.log('Set Has Y-Axis Title to:', properties["Has Y-Axis Title"]);
-        //   }
-
-        //   // Apply Has Dual Y Axis
-        //   if (properties["Has Dual Y Axis"] !== undefined) {
-        //     body.setProperties({ "Has Dual Y Axis": properties["Has Dual Y Axis"] });
-        //     console.log('Set Has Dual Y Axis to:', properties["Has Dual Y Axis"]);
-        //   }
-
-        //   // Apply X-Axis Title text
-        //   if (properties["X-Axis Title"]) {
-        //     const xAxisTitleNode = body.findOne(node => 
-        //       node.type === "TEXT" && node.name === "X-Axis Text"
-        //     ) as TextNode;
-
-        //     if (xAxisTitleNode) {
-        //       xAxisTitleNode.characters = properties["X-Axis Title"];
-        //       console.log('Set X-Axis Title text to:', properties["X-Axis Title"]);
-        //     } else {
-        //       console.log('X-Axis Text node not found');
-        //       body.setProperties({ "X-Axis Text": properties["X-Axis Title"] });
-        //     }
-        //   }
-
-        //   // Apply Y-Axis Title text
-        //   if (properties["Y-Axis Title"]) {
-        //     const yAxisTitleNode = body.findOne(node => 
-        //       node.type === "TEXT" && node.name === "Y-Axis Text"
-        //     ) as TextNode;
-
-        //     if (yAxisTitleNode) {
-        //       yAxisTitleNode.characters = properties["Y-Axis Title"];
-        //       console.log('Set Y-Axis Title text to:', properties["Y-Axis Title"]);
-        //     } else {
-        //       console.log('Y-Axis Text node not found');
-        //       body.setProperties({ "Y-Axis Text": properties["Y-Axis Title"] });
-        //     }
-        //   }
     } else {
         console.log('Body component not found');
     }
@@ -188,11 +103,13 @@ const createChartv2 = (
 
 
 export const createChart = async (chartInstance: InstanceNode, component: LLMResponseComponentType) => {
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+    await delay(1000);
     const header = chartInstance.findOne(node => node.name === "Header") as InstanceNode;
     const body = chartInstance.findOne(node => node.name === "Chart Body") as InstanceNode;
     chartInstance.layoutSizingHorizontal = "FILL";
     chartInstance.layoutSizingVertical = "HUG";
-    if(header && body){
+    if (header && body) {
 
         console.log("Got header and body", component);
         console.log(component.properties["Chart Header Subtext"], component.properties["Chart Title"]);
@@ -202,49 +119,42 @@ export const createChart = async (chartInstance: InstanceNode, component: LLMRes
 
         const dropdownInstance = header.findOne(node => node.name === "Dropdown") as InstanceNode;
         console.log("Got dropdown instance", dropdownInstance);
-        if(dropdownInstance){
+        if (dropdownInstance) {
             const buttonNode = dropdownInstance.findOne(node => node.name === "Button") as InstanceNode;
             console.log("Got button node", buttonNode);
-            if(buttonNode){
+            if (buttonNode) {
                 buttonNode.setProperties({
                     "Button Text#9995:0": component.properties["Chart Title"] || "Chart Title",
                 })
             }
         }
 
-        body.setProperties({
-            "Chart Type": component.properties["Chart Type"] || "Line",
-            "Data Point": component.properties["Data Point"] || "1",
-            "State": component.properties["State"] || "Default",
-            "X-Axis": component.properties["X-Axis"] || "8",
-            "Y-Axis": component.properties["Y-Axis"] || "6",
-            "X-Axis Text#27504:167": component.properties["X-Axis Title"] || "X-Axis Title",
-            "Y-Axis Text#27432:0": component.properties["Y-Axis Title"] || "Y-Axis Title",
-        })
+        if (component.properties["Chart Type"] == "Bar") {
+            body.setProperties({
+                "Chart Type": "Bar",
+                "Data Point": String(Math.min(Math.max(Number(component.properties["Data Point"] || "5"), 5), 8)),
+                "State": "Default",
+                "X-Axis": "NA",
+                "Y-Axis": "7",
+                "X-Axis Text#27504:167": String(component.properties["X-Axis Title"] || "X-Axis Title"),
+                "Y-Axis Text#27432:0": String(component.properties["Y-Axis Title"] || "Y-Axis Title"),
+                "Has Legend#27723:0": false,
+                "Has X-Axis Title#27410:25": true,
+                "Has Y-Axis Title#27410:0": true,
+            })
+        } else {
+            body.setProperties({
+                "Data Point": "3",
+                "State": "Default",
+                "X-Axis": component.properties["X-Axis"] || "8",
+                "Y-Axis": component.properties["Y-Axis"] || "6",
+                "X-Axis Text#27504:167": String(component.properties["X-Axis Title"] || "X-Axis Title"),
+                "Y-Axis Text#27432:0": String(component.properties["Y-Axis Title"] || "Y-Axis Title"),
+            })
+        }
     }
 
-   
+
 }
-
-// export const createChart = async (component: LLMResponseComponentType, parentFrame: FrameNode) => {
-//     console.log('Creating chart', component, component.key);
-
-//     const chartFrame = await figma.createFrame();
-//     parentFrame.appendChild(chartFrame);
-//     chartFrame.layoutMode = "VERTICAL"
-//     chartFrame.layoutSizingHorizontal = "FILL";
-
-//     const headerFrame = await figma.importComponentByKeyAsync("405207dfa53fdbcf14a2c4bd8cb28a09f9afc8c8");
-//     const headerInstance = headerFrame.createInstance();
-//     chartFrame.appendChild(headerInstance);
-
-//     const bodyFrame = await figma.importComponentByKeyAsync("16cb2818a37ff09c260a86763804748d1ab1ece6");
-//     const bodyInstance = bodyFrame.createInstance();
-//     chartFrame.appendChild(bodyInstance);
-
-//     // const properties = component.properties;
-//     // console.log('properties', properties);
-// }
-
 
 export default createChartv2;

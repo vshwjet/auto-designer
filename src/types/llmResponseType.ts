@@ -48,7 +48,10 @@ export interface LLMResponseComponentType {
     | 'Text'
     | 'Tag'
     | 'Tabs'
-    | 'Chart';
+    | 'Chart'
+    | 'Image'
+    | 'Advert Card'
+    | 'Image Component';
   key: string;
   properties: Record<string, string>;
   cells: TableCellType[][];
@@ -60,6 +63,5 @@ type TableCellType = {
 };
 
 export type LLMResponseType = {
-  message: string;
-  flows: LLMResponseFrameType[];
+  section: LLMResponseFrameType;
 };

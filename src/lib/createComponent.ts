@@ -1,7 +1,11 @@
 import { LLMResponseComponentType } from '../types/llmResponseType';
 import { createButton } from './componentCreators';
-import createChartv2, { createChart } from './componentCreators/createChartV2';
+import { createChart } from './componentCreators/createChartV2';
+import createImage from './componentCreators/createImage';
+import createInputField from './componentCreators/createInputFields';
+import createTabs from './componentCreators/createTabs';
 import createTag from './componentCreators/createTag';
+import { createText } from './componentCreators/createText';
 import createDropDown from './componentCreators/dropdownCreator';
 import createSingleStatCard from './componentCreators/statCardCreator';
 import { loadInterFonts } from './utils';
@@ -18,6 +22,16 @@ const createComponent = async (
       return;
     }
 
+    if (component.componentName === 'Image') {
+      const imageNode = await createImage( component, parentFrame);
+      if(imageNode){
+        parentFrame.layoutSizingVertical = "FILL";
+        imageNode.layoutSizingVertical = "FILL";
+        imageNode.layoutSizingHorizontal = "FILL";
+      }
+      return;
+    }
+
     console.log('component name ---', component.componentName);
     const key = component.key;
     const importedComponent = await figma.importComponentByKeyAsync(component.componentName == "Chart" ? "d23b37c43e17e6dc198003affcc8a7ba22567863" : key);
@@ -31,6 +45,12 @@ const createComponent = async (
     parentFrame.appendChild(instance);
 
     switch (component.componentName) {
+      case "Image Component":
+        createImage(component);
+        break;
+      case "Advert Card":
+        createAdvertCard(instance, component);
+        break;
       case "Chart":
         createChart(instance, component);
         break;
@@ -52,6 +72,7 @@ const createComponent = async (
       case "Tabs":
         createTabs(instance, component);
         break;
+
     }
 
     return instance;
@@ -62,52 +83,11 @@ const createComponent = async (
   }
 };
 
-export const createText = async (component: LLMResponseComponentType) => {
-  await figma.loadFontAsync({ family: 'Inter', style: 'Regular' });
-  console.log('Creating text');
-  const text = figma.createText();
-  const properties = component.properties;
-  text.characters = properties.text;
-  text.fontSize = Number(component.properties?.style?.fontsize) || 24;
-  text.fontName = { family: 'Inter', style: 'Regular' };
-  text.fills = [{ type: 'SOLID', color: { r: 0, g: 0, b: 0 } }];
-  return text;
-};
+
+const createAdvertCard = (instance: InstanceNode, component: LLMResponseComponentType) => {
+  
+}
 
 
-const createTabs = (
-  instance: InstanceNode,
-  component: LLMResponseComponentType
-) => {
-  const tabs = component.properties.tabs;
-
-  if (typeof tabs === 'string' && tabs.trim() !== '') {
-    const tabsArray = tabs.split(',').map(tab => tab.trim());
-
-    const tabButtons = instance.findAll(node =>
-      node.name === 'Tab Button'
-    ) as FrameNode[];
-
-
-    tabsArray.forEach((tabText: string, index: number) => {
-      if (index < tabButtons.length) {
-        const textNode = tabButtons[index].findOne(node =>
-          node.type === 'TEXT'
-        ) as TextNode;
-
-        if (textNode) {
-          textNode.characters = tabText;
-        }
-      }
-    });
-  }
-};
-
-const createInputField = (
-  instance: InstanceNode,
-  component: LLMResponseComponentType
-) => {
-  console.log('Creating input field', component.componentName);
-};
 
 export default createComponent;

@@ -13,9 +13,8 @@ const createTableFrame = async (
 
   if (!frameDetails.cells) return tableFrame;
 
-
-
-  for (const cols of frameDetails.cells) {
+  for (let i = 0; i < frameDetails.cells.length; i++) {
+    const cols = frameDetails.cells[i];
     const colFrame = figma.createFrame();
     tableFrame.appendChild(colFrame);
     colFrame.name = 'Column';
@@ -24,8 +23,13 @@ const createTableFrame = async (
     colFrame.layoutSizingHorizontal = 'FILL';
     colFrame.itemSpacing = 0;
 
-    for (const cell of cols) {
-      const cellFrame = await createTableCell(cell);
+    for (let j = 0; j < cols.length; j++) {
+      const cell = cols[j];
+      // Determine cell type and position based on indices
+      const cellType = j === 0 ? "header" : "cell";
+      const cellPosition = i === 0 ? "left" : i === frameDetails.cells.length - 1 ? "right" : "intermediate";
+      
+      const cellFrame = await createTableCell(cell, cellType, cellPosition);
       if (cellFrame) {
         colFrame.appendChild(cellFrame);
         cellFrame.layoutSizingHorizontal = "FILL";
@@ -35,7 +39,7 @@ const createTableFrame = async (
   return tableFrame;
 };
 
-async function createTableCell(cell: any) {
+async function createTableCell(cell: any, cellType: string, cellPosition: string) {
   const component = await figma.importComponentByKeyAsync(cell.key);
   if (!component) {
     console.error(`Component not found for key: ${cell.key}`);
@@ -44,38 +48,41 @@ async function createTableCell(cell: any) {
   const instance = component.createInstance();
   const properties = cell.properties;
   const cellVariant = properties.variant;
-  const cellType = properties.type;
+  // const cellType = properties.type;
 
-
-  // if(cellVariant === "tag"){
-
-  // }
   switch (cellType) {
     case "header":
       instance.setProperties({
-        "Header Content#10157:166": properties['Header Content'] || 'Header'
+        "Header Content#10157:166": properties['Header Content'] || 'Header',
+        "position": cellPosition
       });
       break;
     case "cell":
       switch (cellVariant) {
         case "text":
           instance.setProperties({
-            "Cell Content - Text#10157:224": properties['Cell Content - Text'] || 'Text'
+            "Cell Content - Text#10157:224": properties['Cell Content - Text'] || 'Text',
+            "position": cellPosition
           });
           break;
 
         case "date":
           instance.setProperties({
-            "Cell Content - Alphanumeric#10157:340": properties['Cell Content - Alphanumeric'] || 'Date'
+            "Cell Content - Alphanumeric#10157:340": properties['Cell Content - Alphanumeric'] || 'Date',
+            "position": cellPosition
           });
-          break;
+          break;      
 
         case "amount":
           instance.setProperties({
-            "Cell Content - Number#10157:282": properties['Cell Content - Number'] || 'Amount'
+            "Cell Content - Number#10157:282": properties['Cell Content - Number'] || 'Amount',
+            "position": cellPosition
           });
           break;
         case "tag":
+          instance.setProperties({
+            "position": cellPosition
+          });
           const content = instance.findOne(node => node.name === "Content") as FrameNode;
           console.log('content found', !!content);
           if (content) {
@@ -87,20 +94,7 @@ async function createTableCell(cell: any) {
               "Variant": properties['Tag Variant'] || "Subtle",
               "Label Text#10063:0": properties['Cell Content - Text'] || 'Tag'
             });
-
-            // if(tag){
-            //   const tag_base = tag.findOne(node => node.name === "Tag_Base") as InstanceNode;
-            //   console.log('tag_base found', !!tag_base);
-
-            //   if(tag_base){
-            //    const text = tag_base.findOne(node => node.type === "TEXT" && node.name === "Text") as TextNode;
-            //    if(text){
-            //     text.characters = properties['Cell Content - Text'] || 'Tassg';
-            //    }
-            //   }
-            // }
           }
-
       }
       break;
   }
