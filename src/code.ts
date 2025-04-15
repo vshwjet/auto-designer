@@ -1,482 +1,293 @@
 /// <reference types="@figma/plugin-typings" />
 
-console.log('Plugin starting...');
-
-// Show the plugin UI
 figma.showUI(__html__, {
-  width: 400,
-  height: 500,
-  themeColors: true
+  width: 500,
+  height: 300,
+  themeColors: true,
+  title: "Figmate"
 });
 
-console.log('UI window created');
-
-import {
-  ButtonProperties,
-  ButtonSizeValue,
-  ButtonHierarchyValue,
-  ButtonTypeValue,
-  ButtonStateValue,
-  ButtonWidthValue,
-  ComponentSpec,
-  CustomComponentProperties,
-  LLMResponse,
-  PluginMessage,
-  Frame,
-  FrameLayout,
-  StatCardTypeValue,
-  TableCellProperties,
-  TableCellVariantValue,
-  DesignState
-} from './types';
-
-import { 
-  buttonRegistry, 
-  getButtonKey, 
-  createButtonProperties,
-  getDropdownKey,
-  createDropdownProperties,
-  getInputFieldKey,
-  createInputFieldProperties,
-  getTableCellKey,
-  createTableCellProperties
-} from './componentRegistry';
-
-import { 
-  isButtonProperties,
-  isBreadcrumbsProperties,
-  isDropdownsProperties,
-  isSelectionProperties,
-  isCursorsProperties,
-  isInputFieldsProperties,
-  isStatCardProperties,
-  isTableColumnProperties,
-  isTableCellProperties
-} from './utils';
-
+import { createParentFrame } from './lib/createFlow';
+import { delay } from './lib/utils';
 import { generateDesign } from './services/openai';
+import { PluginMessage } from './types';
+import { LLMResponseType } from './types/llmResponseType';
 
-// Helper function to load all Inter font styles
-async function loadInterFonts() {
-  const fontStyles = [
-    "Thin",
-    "Extra Light",
-    "Light",
-    "Regular",
-    "Medium",
-    "Semi Bold",
-    "Bold",
-    "Extra Bold",
-    "Black"
-  ];
+const temp_prompt = `
+You are a Senior Product Designer. For the given prompt, create a design layout and break down the requirements into smaller sections based on the layout that you think is best. 
+According to the layout, create a response in JSON formal with the following details:
 
-  // Load all font styles
-  await Promise.all(
-    fontStyles.map(style => 
-      figma.loadFontAsync({ family: "Inter", style })
-    )
-  );
+Since we have a limit on the number of token that you can respond with we want to break down the requirements into smaller sections. For each of the sections, create a new prompt from the original prompt, the prompt for each section should only contain the details for the section
+
+
+For example if someone asks you to create a dashboard with a sidebar and a main content area, you should create a layout with a sidebar and a main content area. 
+
+For example
+
+{
+"response":{
+   a parent frame (for the artboard) of type LLMResponseFrameType with type = "PARENT"
+
+   in the children array, add two frame of type LLMResponseFrameType with type = "FRAME"  // since this is a layout that you have already decided for we can directly add as a FRAME
+    1. a frame for the sidebar of type LLMResponseFrameType with type = "PROMPT_SEGMENT", // inside this, add a key "prompt" with the prompt for the section 
+    2. a frame for the main content area of type LLMResponseFrameType with type = "PROMPT_SEGMENT" // inside this, add a key "prompt" with the prompt for the section
+  } 
 }
 
-async function createComponent(parent: FrameNode, spec: ComponentSpec): Promise<InstanceNode | null> {
-  try {
-    let key = spec.key;
-    
-    // Load all Inter fonts at the start
-    await loadInterFonts();
-    
-    // Get the appropriate key based on component type and properties
-    if (spec.type === "TableCell" && isTableCellProperties(spec.properties)) {
-      key = getTableCellKey(spec.properties);
-    }
-    
-    const component = await figma.importComponentByKeyAsync(key);
-    if (!component) {
-      console.error(`Component not found for key: ${key}`);
-      return null;
-    }
-    const instance = component.createInstance();
-    parent.appendChild(instance);
 
-    // Set layout alignment based on stretch property or component type
-    if (spec.type === "StatCard") {
-      // For StatCards, set both layoutAlign and layoutGrow
-      instance.layoutAlign = "STRETCH";
-      instance.layoutGrow = 1; // Make StatCards share space equally in horizontal layouts
-      instance.layoutSizingVertical = "HUG"; // Ensure height is always HUG
-    } else if (spec.stretch) {
-      instance.layoutAlign = "STRETCH";
-    } else {
-      instance.layoutAlign = "INHERIT";
-    }
+Each children that has as a PROMPT_SEGMENT type, will have a prompt key inside it.
+We will use this prompt to generate the design for the section.
+So make sure to add a proper prompt accordingly
 
-    // Set component properties based on type
-    if (instance.setProperties) {
-      // Debug: Log available properties
-      console.log('Component type:', spec.type);
-      console.log('Available properties:', instance.componentProperties);
-      
-      if (spec.type === "InputField" && isInputFieldsProperties(spec.properties)) {
-        // Add text-related properties and boolean flags
-        const props = {
-          // Text properties
-          "Label Text#9987:546": spec.properties.labelInfo || "",
-          "Text Placeholder#10157:2": spec.properties.placeholder || "",
-          "Text Filled#10157:43": spec.properties.value || "",
-          // Boolean flags
-          "Has Label#9987:455": spec.properties.hasLabel,
-          "Has Hint#9987:637": spec.properties.hasHint,
-          "Has Help Icon#9987:910": false,
-          "Has Main Icon#9987:819": false,
-          // Hint text (only if hint is enabled)
-          "Hint Text#9987:728": spec.properties.hasHint ? spec.properties.hintText || "" : ""
-        };
-        console.log('Setting InputField properties:', props);
-        instance.setProperties(props);
-      } else if (spec.type === "Button" && isButtonProperties(spec.properties)) {
-        const props = {
-          // Text properties
-          "Button Text#9995:0": spec.properties.label || "Button",
-          // Boolean flags
-          "Has Text#9995:121": true,
-          "Has Leading Icon#9995:484": false,
-          "Has Trailing Icon#10131:0": false,
-          // Icon instances (only if icons are enabled)
-          "Leading Icon#9995:363": "27158:26282",
-          "Trailing Icon#10131:289": "27158:26280"
-        };
-        console.log('Setting Button properties:', props);
-        instance.setProperties(props);
-      } else if (spec.type === "Dropdown" && isDropdownsProperties(spec.properties)) {
-        const props = {
-          // Boolean flags
-          "Has Label#10131:578": spec.properties["Has Label"],
-          "Has Hint Text#10131:580": spec.properties["Has Hint Text"],
-          // Text properties
-          "Dropdown Label#27356:15": spec.properties["Dropdown Label"] || "",
-          "Dropdown Hint#27356:64": spec.properties["Dropdown Hint"] || "",
-          // Variant properties
-          "Size": spec.properties.Size,
-          "Hirerchey": spec.properties.Hirerchey,
-          "Type": spec.properties.Type,
-          "State": spec.properties.State
-        };
-        console.log('Setting Dropdown properties:', props);
-        instance.setProperties(props);
+Maintain consistency across all the sections
+`
 
-        // Find and update the placeholder text if provided
-        if (spec.properties.placeholder) {
-          // Fonts are already loaded at the start of createComponent
-          // Find the text node that contains the placeholder text
-          const findPlaceholderTextNode = (node: SceneNode): TextNode | null => {
-            if (node.type === 'TEXT' && node.characters.toLowerCase().includes('select')) {
-              return node as TextNode;
-            }
-            if ('children' in node) {
-              for (const child of node.children) {
-                const result = findPlaceholderTextNode(child);
-                if (result) return result;
-              }
-            }
-            return null;
-          };
-
-          // Find the text node and update its characters
-          const textNode = findPlaceholderTextNode(instance);
-          if (textNode) {
-            textNode.characters = spec.properties.placeholder;
-          }
-        }
-      } else if (spec.type === "StatCard" && isStatCardProperties(spec.properties)) {
-        const props = {
-          // Use the exact Figma instance property names with their IDs
-          "Stat Label#27356:0": spec.properties["Stat Label"] || "Stat Label",
-          "Stat Value#27356:5": spec.properties["Stat Value"] || "0",
-          "Stat Delta#27356:10": spec.properties["Stat Delta"] || "0%"
-        };
-        console.log('Setting StatCard properties:', props);
-        instance.setProperties(props);
-      } else if (spec.type === "TableColumn" && isTableColumnProperties(spec.properties)) {
-        const props = {
-          "Label#1234:0": spec.properties.label || "",
-          "Value#1234:1": spec.properties.value || ""
-        };
-        console.log('Setting TableColumn properties:', props);
-        instance.setProperties(props);
-      } else if (spec.type === "TableCell" && isTableCellProperties(spec.properties)) {
-        const props: { [key: string]: string | boolean } = {};
-        
-        // Set content based on type and variant
-        if (spec.properties.type === "header") {
-          props["Header Content"] = spec.properties["Header Content"] || "";
-          if (spec.properties["Has Filter"]) {
-            props["Has Filter"] = true;
-          }
-        } else {
-          // Set cell content based on variant
-          switch (spec.properties.variant) {
-            case TableCellVariantValue.Text:
-              props["Cell Content - Text"] = spec.properties["Cell Content - Text"] || "";
-              break;
-            case TableCellVariantValue.Amount:
-              props["Cell Content - Amount"] = spec.properties["Cell Content - Amount"] || "";
-              break;
-            case TableCellVariantValue.Date:
-              props["Cell Content - Date"] = spec.properties["Cell Content - Date"] || "";
-              break;
-            case TableCellVariantValue.Tag:
-              props["Cell Content - Tag"] = spec.properties["Cell Content - Tag"] || "";
-              break;
-            case TableCellVariantValue.User:
-              props["Cell Content - User"] = spec.properties["Cell Content - User"] || "";
-              break;
-          }
-        }
-
-        // Set icon flags
-        if (spec.properties["Has Cell Icon 1"]) props["Has Cell Icon 1"] = true;
-        if (spec.properties["Has Cell Icon 2"]) props["Has Cell Icon 2"] = true;
-        if (spec.properties["Has Cell Icon 3"]) props["Has Cell Icon 3"] = true;
-        if (spec.properties["Has Cell Icon More"]) props["Has Cell Icon More"] = true;
-
-        console.log('Setting TableCell properties:', props);
-        instance.setProperties(props);
-      } else if (spec.type === "Graph") {
-        // Graph component doesn't require any additional properties to be set
-        console.log('Creating Graph component');
-      } else {
-        console.warn('Component does not support setting properties:', spec.type);
-      }
-    } else {
-      console.warn('Component does not support setting properties:', spec.type);
-    }
-
-    return instance;
-  } catch (error) {
-    console.error(`Error creating component: ${error}`);
-    return null;
-  }
+function parseNumberedList(input: string): string[] {
+  return input
+    .split('\n')
+    .map((line) => line.replace(/^\d+\.\s*/, ''))
+    .filter((line) => line.trim() !== '');
 }
 
-async function createFrameWithComponents(frameSpec: Frame): Promise<FrameNode> {
-  // Create frame with auto-layout
-  const frame = figma.createFrame();
-  frame.name = frameSpec.name;
-  
-  // Set width
-  const width = Math.max(frameSpec.width, 0.01);
-  frame.resize(width, frameSpec.height);
-  
-  // Set background if specified
-  if (frameSpec.background) {
-    frame.fills = [{
-      type: 'SOLID',
-      color: frameSpec.background.color,
-      opacity: frameSpec.background.opacity
-    }];
-  }
-
-  // Set auto-layout properties first
-  frame.layoutMode = frameSpec.layout.type || "VERTICAL"; // Ensure auto-layout is always set
-  frame.primaryAxisAlignItems = frameSpec.layout.alignment.primary;
-  frame.counterAxisAlignItems = frameSpec.layout.alignment.counter;
-  frame.itemSpacing = frameSpec.layout.itemSpacing;
-  
-  // Set padding
-  frame.paddingTop = frameSpec.layout.padding.top;
-  frame.paddingRight = frameSpec.layout.padding.right;
-  frame.paddingBottom = frameSpec.layout.padding.bottom;
-  frame.paddingLeft = frameSpec.layout.padding.left;
-
-  // Create child frames recursively
-  if (frameSpec.children) {
-    for (const childSpec of frameSpec.children) {
-      // Ensure child frames use auto-layout
-      if (!childSpec.layout.type || childSpec.layout.type === "NONE") {
-        childSpec.layout.type = "VERTICAL";
-      }
-      const childFrame = await createFrameWithComponents(childSpec);
-      frame.appendChild(childFrame);
-      
-      // Set child frame properties after it's added to parent
-      childFrame.layoutAlign = "STRETCH";
-      if (childFrame.layoutMode === "VERTICAL" || childFrame.layoutMode === "HORIZONTAL") {
-        childFrame.layoutSizingHorizontal = "FILL";
-      }
-    }
-  }
-
-  // Create components within this frame
-  if (frameSpec.components) {
-    let currentTableRow: FrameNode | null = null;
-    
-    for (const component of frameSpec.components) {
-      if (component.type === "TableCell") {
-        // If this is a table cell and we don't have a current row, create one
-        if (!currentTableRow) {
-          currentTableRow = figma.createFrame();
-          currentTableRow.name = "Table Row";
-          currentTableRow.layoutMode = "HORIZONTAL"; // Set auto-layout first
-          currentTableRow.itemSpacing = 0;
-          currentTableRow.paddingLeft = 0;
-          currentTableRow.paddingRight = 0;
-          currentTableRow.paddingTop = 0;
-          currentTableRow.paddingBottom = 0;
-          frame.appendChild(currentTableRow); // Add to parent before setting sizing
-          currentTableRow.layoutAlign = "STRETCH";
-          currentTableRow.layoutSizingHorizontal = "FILL";
-          currentTableRow.layoutSizingVertical = "HUG";
-        }
-        
-        // Create the cell in the current row
-        const cellInstance = await createComponent(currentTableRow, component);
-        if (cellInstance) {
-          cellInstance.layoutAlign = "STRETCH";
-        }
-      } else {
-        // If this is not a table cell, reset the current row
-        currentTableRow = null;
-        const componentInstance = await createComponent(frame, component);
-        if (componentInstance && component.stretch) {
-          componentInstance.layoutAlign = "STRETCH";
-        }
-      }
-    }
-  }
-
-  // After all components are added, set the sizing modes and adjust heights
-  if (frameSpec.height === 1080) {
-    // For the main frame (parent), keep fixed height
-    frame.primaryAxisSizingMode = "FIXED";
-    frame.counterAxisSizingMode = "FIXED";
-    frame.layoutSizingHorizontal = "FIXED";
-    frame.layoutSizingVertical = "FIXED";
-    frame.resize(frame.width, 1080);
-  } else {
-    // For child frames, use AUTO for both dimensions initially
-    frame.primaryAxisSizingMode = "AUTO";
-    frame.counterAxisSizingMode = "AUTO";
-    
-    // Only set FILL if this is a child of an auto-layout frame
-    if (frame.parent && ("layoutMode" in frame.parent) && 
-        (frame.parent.layoutMode === "VERTICAL" || frame.parent.layoutMode === "HORIZONTAL")) {
-      frame.layoutSizingHorizontal = "FILL";
-    }
-    frame.layoutSizingVertical = "HUG";
-    
-    // Force the frame to recalculate its size based on content
-    frame.resize(frame.width, frame.height);
-  }
-
-  return frame;
-}
-
-// Initialize plugin with state management
-const designState: DesignState = {
-  currentFrame: null,
-  frameNode: null,
-  history: [],
-  historyIndex: -1
-};
-
-function updateDesignState(frame: Frame, frameNode: FrameNode) {
-  // Add new state to history, removing any forward history if we're not at the end
-  designState.history = designState.history.slice(0, designState.historyIndex + 1);
-  designState.history.push(frame);
-  designState.historyIndex++;
-  
-  // Update current state
-  designState.currentFrame = frame;
-  
-  // Update the existing frame instead of removing it
-  if (designState.frameNode) {
-    // Keep the existing frame's position
-    const oldX = designState.frameNode.x;
-    const oldY = designState.frameNode.y;
-    
-    // Remove all children from the existing frame
-    while (designState.frameNode.children.length > 0) {
-      designState.frameNode.children[0].remove();
-    }
-    
-    // Copy properties from the new frame to the existing frame
-    designState.frameNode.name = frameNode.name;
-    designState.frameNode.resize(frameNode.width, frameNode.height);
-    designState.frameNode.layoutMode = frameNode.layoutMode;
-    designState.frameNode.primaryAxisAlignItems = frameNode.primaryAxisAlignItems;
-    designState.frameNode.counterAxisAlignItems = frameNode.counterAxisAlignItems;
-    designState.frameNode.itemSpacing = frameNode.itemSpacing;
-    designState.frameNode.paddingTop = frameNode.paddingTop;
-    designState.frameNode.paddingRight = frameNode.paddingRight;
-    designState.frameNode.paddingBottom = frameNode.paddingBottom;
-    designState.frameNode.paddingLeft = frameNode.paddingLeft;
-    designState.frameNode.fills = frameNode.fills;
-    
-    // Move all children from the new frame to the existing frame
-    while (frameNode.children.length > 0) {
-      const child = frameNode.children[0];
-      designState.frameNode.appendChild(child);
-    }
-    
-    // Restore the frame's position
-    designState.frameNode.x = oldX;
-    designState.frameNode.y = oldY;
-    
-    // Remove the temporary frame
-    frameNode.remove();
-  } else {
-    // If there's no existing frame, use the new one
-    designState.frameNode = frameNode;
-  }
-}
-
-// Handle messages from UI
 figma.ui.onmessage = async (msg: PluginMessage) => {
   try {
     switch (msg.type) {
       case 'generate-design':
-      case 'update-design':
         if (!msg.prompt) {
           throw new Error('Design prompt is required');
         }
 
-        // Check if we can do an incremental update
-        if (msg.isIncremental && !designState.currentFrame) {
-          throw new Error('No existing design found to update');
+        const sidebarReq = msg.addToSidebar; 
+
+        if(sidebarReq){
+          const artboard = figma.createFrame();
+          artboard.resize(1728, 1024);
+          figma.currentPage.appendChild(artboard);
+  
+          artboard.name = 'Flow';
+          artboard.layoutMode = 'HORIZONTAL';
+          artboard.layoutSizingVertical = "HUG"
+          artboard.primaryAxisSizingMode = 'FIXED';
+          artboard.primaryAxisAlignItems = "MAX";
+          // Add light grey background to the parent frame
+          artboard.fills = [{
+            type: 'SOLID',
+            color: { r: 0.95, g: 0.95, b: 0.95 },
+            opacity: 1
+          }];
+
+          const sidebarFrame = figma.createFrame();
+          sidebarFrame.resize(500, sidebarFrame.height);
+          artboard.appendChild(sidebarFrame);
+
+          sidebarFrame.name = 'Sidebar';
+          sidebarFrame.layoutMode = 'VERTICAL';
+          sidebarFrame.layoutSizingVertical = "HUG"
+          sidebarFrame.counterAxisSizingMode = 'FIXED';
+          // Ensure sidebar has white background
+          sidebarFrame.fills = [{
+            type: 'SOLID',
+            color: { r: 1, g: 1, b: 1 },
+            opacity: 1
+          }];
+          
+          figma.notify('Generating sidebar design...');
+          
+          // Parse the prompts just like in the regular flow
+          const prompts = parseNumberedList(msg.prompt);
+          
+          // Process each prompt and add to the sidebar
+          for (const prompt of prompts) {
+            console.log('--------------- \n Getting sidebar prompt design: ', `Generating for a sidebar: ${prompt}`);
+            const designSpec: LLMResponseType = await generateDesign(prompt);
+            const flowDetails = designSpec.section;
+            console.log('flowDetails for sidebar item', flowDetails);
+            
+            // Add the design to the sidebar frame instead of artboard
+            await createParentFrame(flowDetails, sidebarFrame);
+            
+            await delay(3000);
+            console.log('--------------- \n');
+          }
+          
+          figma.viewport.scrollAndZoomIntoView([artboard]);
+          
+          await savePrompt(msg.prompt);
+          figma.notify('Sidebar design generation completed!', {timeout: 1000});
+          return;
         }
 
-        figma.notify(msg.isIncremental ? 'Updating design...' : 'Generating design...');
+        // const designSpec: any = await generateDesign(msg.prompt, temp_prompt);
+        // console.log(designSpec);
+
+
+        // --------- OLD --------
+
+        figma.notify('Generating design...');
+
+        const prompts = parseNumberedList(msg.prompt);
+        const artboard = figma.createFrame();
+        artboard.resize(1728, 1024);
+        figma.currentPage.appendChild(artboard);
+
+        artboard.name = 'Flow';
+        artboard.layoutMode = 'VERTICAL';
+
         
-        // Generate design using LLM, passing current state for incremental updates
-        const designSpec = await generateDesign(
-          msg.prompt, 
-          msg.isIncremental && designState.currentFrame ? designState.currentFrame : undefined
-        );
-        
-        // Create the design frame with components
-        const frame = await createFrameWithComponents(designSpec.frame);
-        
-        // Update state
-        updateDesignState(designSpec.frame, frame);
-        
-        // Only adjust viewport for new designs
-        if (!msg.isIncremental) {
-          const viewport = figma.viewport.center;
-          frame.x = viewport.x - frame.width / 2;
-          frame.y = viewport.y - frame.height / 2;
-          figma.viewport.scrollAndZoomIntoView([frame]);
+
+        for (const prompt of prompts) {
+          console.log('--------------- \n Getting prompt design: ', prompt);
+           const designSpec: LLMResponseType = await generateDesign(prompt);
+          const flowDetails = designSpec.section;
+          console.log('flowDetails', flowDetails);
+          
+          await createParentFrame(flowDetails, artboard);
+          
+          await delay(3000);
+          console.log('--------------- \n');
         }
-        
-        figma.notify(msg.isIncremental ? 'Design updated successfully' : 'Design generated successfully');
+
+        // Scroll to the generated content after completion
+        figma.viewport.scrollAndZoomIntoView([artboard]);
+
+        await savePrompt(msg.prompt);
+        figma.notify('Design generation completed!', {timeout: 1000});
         break;
-        
+      case 'save-prompt':
+        await savePrompt(msg.prompt);
+        break;
+      case 'get-prompts':
+        const savedPrompts = await getSavedPrompts();
+        figma.ui.postMessage({ type: 'saved-prompts', prompts: savedPrompts });
+        break;
       case 'cancel':
         figma.closePlugin();
         break;
+      case 'create-chart':
+
+        // action stat card
+        // createInstance("e65e73efaa3409f22911401412152d8e46593643");
+
+        // button
+        // createInstance("c51d18f7addda3a79d26c31ce33d0d7d394a50cf");
+
+        // advert card
+        // createInstance("8da576d58256bec6595649022b5c864d39d862ee");
+
+        //input field
+        // createInstance("8b7de6b46a9f5382402012f5c8613936d5206669");
+
+
+        // createInstance("755e5a4a9708e8b91aaae75e180ee871f549f55e");
+
+
+        break;
+      case 'clear-prompts':
+        // Clear the saved prompts
+        figma.clientStorage.setAsync('savedPrompts', [])
+          .then(() => {
+            // Notify the UI that prompts have been cleared
+            figma.ui.postMessage({
+              type: 'saved-prompts',
+              prompts: []
+            });
+          })
+          .catch(error => {
+            console.error('Failed to clear prompts:', error);
+          });
+        break;
     }
   } catch (error) {
-    console.error('Failed to generate/update design:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    figma.notify('Failed to generate/update design: ' + errorMessage, { error: true });
+    console.error('Failed to generate design:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    figma.notify('Failed to generate design: ' + errorMessage, { error: true });
   }
-}; 
+};
+
+async function savePrompt(prompt: string) {
+  let prompts = await figma.clientStorage.getAsync("userPrompts") || [];
+  if (!Array.isArray(prompts)) {
+    prompts = [];
+  }
+  prompts.push(prompt);
+
+  await figma.clientStorage.setAsync("userPrompts", prompts);
+}
+
+async function getSavedPrompts() {
+  const prompts = await figma.clientStorage.getAsync("userPrompts") || [];
+  return prompts;
+}
+
+
+const createInstance = async (key: string) => {
+  const parentFrame = figma.createFrame();
+  parentFrame.resize(1726, 1080);
+  parentFrame.layoutMode = "VERTICAL";
+  parentFrame.layoutSizingHorizontal = "HUG";
+  parentFrame.paddingTop = 100;
+  parentFrame.paddingRight = 100;
+  parentFrame.paddingBottom = 100;
+  parentFrame.paddingLeft = 100;
+  const importedComponent = await figma.importComponentByKeyAsync(key);
+  const instance = importedComponent.createInstance();
+  parentFrame.appendChild(instance);
+
+
+  // if(key == "e65e73efaa3409f22911401412152d8e46593643"){
+  //   console.log('stat card');
+  // }
+
+  if(key == "755e5a4a9708e8b91aaae75e180ee871f549f55e"){
+    console.log('info bar');
+
+    instance.setProperties({
+      "Type": "Teal",
+      "Message#10026:3": "sdfsdfs",
+      "Heading#10026:0": "Heading Text",
+      "Has Action#10026:18": true,
+    })
+  }
+
+
+  if(key == "e65e73efaa3409f22911401412152d8e46593643"){
+    instance.setProperties({
+      "Type": "Action"
+    })
+    const actionButton = instance.findOne(node => node.name === "Button") as InstanceNode;
+    if(actionButton){
+      actionButton.setProperties({
+        "Button Text#9995:0": "Test", 
+        "Has Leading Icon#9995:484": false
+      })
+    }
+  }
+
+  // Input Field
+  if(key == "8b7de6b46a9f5382402012f5c8613936d5206669"){
+    instance.setProperties({
+      "Label Text#9987:546": "Test",
+      "Text Placeholder#10157:2": "Placeholder",
+      "Hint Text#9987:728": "Hint da text",
+      "Type": "Floating Label - Number"
+    })
+  }
+
+  if(key == "c51d18f7addda3a79d26c31ce33d0d7d394a50cf"){
+    // Button
+    instance.setProperties({
+      "Button Text#9995:0": "Custom Button Text", 
+      "Has Leading Icon#9995:484": false,
+      "Has Trailing Icon#10131:0": false,
+      "Has Text#9995:121": true,
+      "Hirerchey": "Primary",
+      "Size": "small",
+      "State": "Default",
+      "Type": "Solid Fill",
+      "Width": "Half"
+    })
+  }
+}
+
+

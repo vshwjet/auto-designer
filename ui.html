@@ -1,14 +1,15 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
+
 <head>
   <style>
     :root {
-      --figma-color-bg: var(--figma-color-bg-default, #ffffff);
-      --figma-color-text: var(--figma-color-text, #333333);
-      --figma-color-border: var(--figma-color-border, #3d3d3d);
-      --figma-color-primary: var(--figma-color-bg-brand, #18A0FB);
-      --figma-color-primary-hover: var(--figma-color-bg-brand-hover, #0D8DE3);
-      --figma-color-secondary: var(--figma-color-bg-secondary, #f5f5f5);
+      --figma-color-bg: #1e1e1e;
+      --figma-color-text: #e0e0e0;
+      --figma-color-border: #444444;
+      --figma-color-primary: #2a82da;
+      --figma-color-primary-hover: #1f6bb8;
+      --figma-color-secondary: #2c2c2c;
     }
 
     body {
@@ -18,64 +19,82 @@
       background-color: var(--figma-color-bg);
       color: var(--figma-color-text);
     }
+
     .container {
       display: flex;
       flex-direction: column;
       gap: 16px;
     }
+
     .form-group {
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
+
     label {
       font-size: 12px;
       font-weight: 500;
       color: var(--figma-color-text);
     }
-    textarea {
+
+    textarea, select {
       padding: 8px;
-      border: 1px solid #b0b0b0;
+      border: 1px solid var(--figma-color-border);
       border-radius: 4px;
       font-size: 14px;
-      min-height: 80px;
-      resize: vertical;
-      background-color: var(--figma-color-bg);
+      background-color: var(--figma-color-secondary);
       color: var(--figma-color-text);
     }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    select {
+      cursor: pointer;
+    }
+
     button {
       background: var(--figma-color-primary);
-      color: white;
+      color: #ffffff;
       border: none;
       padding: 8px 16px;
       border-radius: 6px;
       cursor: pointer;
       font-weight: 500;
     }
+
     button:hover {
       background: var(--figma-color-primary-hover);
     }
+
     #status {
       color: var(--figma-color-text);
       opacity: 0.8;
       font-size: 14px;
     }
+
     .toggle-container {
       display: flex;
       align-items: center;
       gap: 8px;
     }
+
     .toggle-switch {
       position: relative;
       display: inline-block;
       width: 36px;
       height: 20px;
     }
+
     .toggle-switch input {
       opacity: 0;
       width: 0;
       height: 0;
     }
+
     .toggle-slider {
       position: absolute;
       cursor: pointer;
@@ -83,92 +102,221 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: #c4c4c4;
-      transition: .4s;
+      background-color: #555555;
+      transition: 0.4s;
       border-radius: 20px;
     }
+
     .toggle-slider:before {
       position: absolute;
-      content: "";
+      content: '';
       height: 16px;
       width: 16px;
       left: 2px;
       bottom: 2px;
-      background-color: white;
-      transition: .4s;
+      background-color: #cccccc;
+      transition: 0.4s;
       border-radius: 50%;
     }
-    input:checked + .toggle-slider {
+
+    input:checked+.toggle-slider {
       background-color: var(--figma-color-primary);
     }
-    input:checked + .toggle-slider:before {
+
+    input:checked+.toggle-slider:before {
       transform: translateX(16px);
     }
+
     .toggle-label {
       font-size: 12px;
       color: var(--figma-color-text);
     }
+
     h3 {
       margin: 0;
       color: var(--figma-color-text);
     }
+    
+    #savedPromptsList{
+      margin-bottom: 10px;
+      list-style-type: none;
+      padding: 0;
+    }
+    
+    .prompt-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 6px 8px;
+      background-color: var(--figma-color-secondary);
+      border-radius: 4px;
+    }
+    
+    .prompt-text {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 12px;
+    }
+    
+    .copy-btn {
+      background: transparent;
+      color: var(--figma-color-text);
+      border: 1px solid var(--figma-color-border);
+      padding: 2px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      margin-left: 8px;
+      min-width: 40px;
+    }
+    
+    .copy-btn:hover {
+      background: var(--figma-color-border);
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
-    <h3>AI Design Assistant</h3>
-    
-    <div class="form-group">
+    <form id="designForm" class="form-group">
       <label for="prompt">Design Prompt</label>
-      <textarea id="prompt" placeholder="Describe the design you want to generate..."></textarea>
-    </div>
+      <textarea id="prompt" placeholder="Describe the design you want to generate..." autofocus></textarea>
+      
+      <div class="toggle-container">
+        <label class="toggle-switch">
+          <input type="checkbox" id="sidebarToggle">
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="toggle-label">Add design to sidebar</span>
+      </div>
+      
+      <div class="button-group" style="display: flex; gap: 8px;">
+        <button type="submit" id="generateBtn">Generate Design</button>
+        <button type="button" id="createChartBtn">Create</button>
+      </div>
+      <div id="status"></div>
 
-    <div class="toggle-container">
-      <label class="toggle-switch">
-        <input type="checkbox" id="updateModeToggle">
-        <span class="toggle-slider"></span>
-      </label>
-      <span class="toggle-label">Update existing design</span>
-    </div>
+    </form>
 
-    <button id="generateBtn">Generate New Design</button>
-    <div id="status"></div>
+    <div id="savedPromptsContainer">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h4 style="margin: 0;">Saved Prompts</h4>
+        <button id="clearPromptsBtn" class="copy-btn">Clear All</button>
+      </div>
+      <ul id="savedPromptsList"></ul>
+    </div>
   </div>
-
   <script>
+    const form = document.getElementById('designForm');
     const generateBtn = document.getElementById('generateBtn');
-    const updateModeToggle = document.getElementById('updateModeToggle');
+    const createChartBtn = document.getElementById('createChartBtn');
+    const promptInput = document.getElementById('prompt');
+    const clearPromptsBtn = document.getElementById('clearPromptsBtn');
 
-    // Update button text based on toggle state
-    updateModeToggle.onchange = () => {
-      generateBtn.textContent = updateModeToggle.checked ? 'Update Design' : 'Generate New Design';
+    // Add event listener for keydown on the textarea
+    promptInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        form.dispatchEvent(new Event('submit'));
+      }
+    });
+
+    // Add event listener for the Create Chart button
+    createChartBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const designSystem = 'juspay'; // Always use juspay
+      document.getElementById('status').textContent = 'Creating chart...';
+      parent.postMessage({ pluginMessage: { type: 'create-chart', designSystem } }, '*');
+    });
+
+    // Add event listener for the Clear All button
+    clearPromptsBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to clear all saved prompts?')) {
+        parent.postMessage({ pluginMessage: { type: 'clear-prompts' } }, '*');
+      }
+    });
+
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      let prompt = document.getElementById('prompt').value;
+      const designSystem = 'juspay'; // Always use juspay
+      const addToSidebar = document.getElementById('sidebarToggle').checked;
+      
+      if (!prompt) {
+        prompt = 'create a dashboard with metrics such as success rate, mrr and also add global filters also add a table relevant to payments data';
+      }
+      
+      // Save the prompt
+      savePrompt(prompt);
+      
+      document.getElementById('status').textContent = 'Generating design...';
+      parent.postMessage({ pluginMessage: { type: 'generate-design', prompt, designSystem, addToSidebar } }, '*');
     };
 
-    generateBtn.onclick = () => {
-      const prompt = document.getElementById('prompt').value;
-      if (!prompt) {
-        document.getElementById('status').textContent = 'Please enter a design prompt';
-        return;
-      }
-
-      const isUpdateMode = updateModeToggle.checked;
-      document.getElementById('status').textContent = isUpdateMode ? 'Updating design...' : 'Generating design...';
-      
-      parent.postMessage({ 
-        pluginMessage: { 
-          type: isUpdateMode ? 'update-design' : 'generate-design',
-          prompt,
-          isIncremental: isUpdateMode
-        } 
-      }, '*');
+    window.onload = () => {
+      parent.postMessage({ pluginMessage: { type: "get-prompts" } }, "*");
     };
 
     window.onmessage = (event) => {
       const msg = event.data.pluginMessage;
+      
       if (msg.type === 'status') {
         document.getElementById('status').textContent = msg.message;
+      } else if (msg.type === "saved-prompts") {
+        const savedPromptsList = document.getElementById("savedPromptsList");
+        savedPromptsList.innerHTML = ""; // Clear existing list
+
+        // Display prompts in reverse order (newest first)
+        msg.prompts.slice().reverse().forEach((prompt) => {
+          const li = document.createElement("li");
+          li.className = "prompt-item";
+          
+          // Create prompt text element with truncation
+          const promptText = document.createElement("div");
+          promptText.className = "prompt-text";
+          promptText.title = prompt; // Show full prompt on hover
+          promptText.textContent = prompt.length > 60 ? prompt.substring(0, 60) + "..." : prompt;
+          
+          // Create copy button
+          const copyBtn = document.createElement("button");
+          copyBtn.className = "copy-btn";
+          copyBtn.textContent = "Copy";
+          copyBtn.onclick = () => {
+            navigator.clipboard.writeText(prompt)
+              .then(() => {
+                copyBtn.textContent = "Copied!";
+                setTimeout(() => {
+                  copyBtn.textContent = "Copy";
+                }, 1500);
+              })
+              .catch(err => {
+                console.error('Failed to copy: ', err);
+              });
+          };
+          
+          li.appendChild(promptText);
+          li.appendChild(copyBtn);
+          savedPromptsList.appendChild(li);
+        });
       }
     };
+
+    // Add this function to handle form submission and save the prompt
+    function savePrompt(prompt) {
+      parent.postMessage({ 
+        pluginMessage: { 
+          type: "save-prompt", 
+          prompt, 
+          maxPrompts: 10,
+          ensureUnique: true  // Add flag to ensure uniqueness
+        } 
+      }, "*");
+    }
+
   </script>
 </body>
-</html> 
+
+</html>

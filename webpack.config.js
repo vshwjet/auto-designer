@@ -15,7 +15,7 @@ module.exports = (env, argv) => ({
   mode: argv.mode === 'production' ? 'production' : 'development',
   devtool: argv.mode === 'production' ? false : 'inline-source-map',
   entry: {
-    code: './src/code.ts'
+    code: './src/code.ts',
   },
   module: {
     rules: [
@@ -33,7 +33,5 @@ module.exports = (env, argv) => ({
     filename: '[name].js',
     path: path.resolve(__dirname, 'dist'),
   },
-  plugins: [
-    new webpack.DefinePlugin(envKeys)
-  ]
-}); 
+  plugins: [new webpack.DefinePlugin(envKeys)],
+});

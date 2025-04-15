@@ -8,5 +8,5 @@ export * from './tableColumnRegistry';
 export {
   getTableCellKey,
   createTableCellProperties,
-  tableCellRegistry
+  tableCellRegistry,
 } from './tableCellRegistry';
