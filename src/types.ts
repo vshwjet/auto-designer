@@ -329,6 +329,7 @@ export interface ComponentSpec {
     | 'Tag';
   key: string;
   properties: CustomComponentProperties;
+  stretch?: boolean;
 }
 
 export interface ComponentConfig {
