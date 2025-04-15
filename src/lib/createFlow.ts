@@ -5,6 +5,7 @@ import {
 } from '../types/llmResponseType';
 import { createTableFrame } from './componentCreators';
 import createComponent from './createComponent';
+import setFrameLayoutDetails from './setFrameLayoutDetails';
 
 export const createParentFrame = async (
   sectionDetails: LLMResponseFrameType,
@@ -25,13 +26,15 @@ export const createParentFrame = async (
     return;
   }
 
-  setFrameLayoutDetails(
-    sectionFrame,
-    sectionDetails.layout,
-    sectionDetails.width,
-    sectionDetails.height,
-    sectionDetails.background
-  );
+  // setFrameLayoutDetails(
+  //   sectionFrame,
+  //   sectionDetails.layout,
+  //   sectionDetails.width,
+  //   sectionDetails.height,
+  //   sectionDetails.background
+  // );
+
+  setFrameLayoutDetails(sectionFrame, sectionDetails)
   
   sectionFrame.layoutSizingHorizontal = "FILL"
   sectionFrame.layoutSizingVertical = "HUG"
@@ -71,10 +74,7 @@ const createFrame = async (frameData: LLMResponseFrameType, currFrame: FrameNode
   currFrame.name = frameData.name;
   setFrameLayoutDetails(
     currFrame,
-    frameData.layout,
-    frameData.width,
-    frameData.height,
-    frameData.background
+    frameData
   )
 
   currFrame.layoutMode = frameData.layout?.type; 
@@ -100,47 +100,47 @@ const createFrame = async (frameData: LLMResponseFrameType, currFrame: FrameNode
   return currFrame;
 }
 
-const setFrameLayoutDetails = (
-  frame?: FrameNode,
-  layoutDetails?: LLMResponseFrameType['layout'],
-  width?: number,
-  height?: number,
-  backgroundColor?: LLMResponseFrameType['background']
-) => {
-  if (!frame) return;
+// const setFrameLayoutDetails = (
+//   frame?: FrameNode,
+//   layoutDetails?: LLMResponseFrameType['layout'],
+//   width?: number,
+//   height?: number,
+//   backgroundColor?: LLMResponseFrameType['background']
+// ) => {
+//   if (!frame) return;
 
-  if (width && height) {
-    frame.resize(width, height);
-  }
+//   if (width && height) {
+//     frame.resize(width, height);
+//   }
 
-  if (layoutDetails) {
-    frame.layoutMode = layoutDetails.type;
-    frame.paddingTop = layoutDetails.padding.top;
-    frame.paddingRight = layoutDetails.padding.right;
-    frame.paddingBottom = layoutDetails.padding.bottom;
-    frame.paddingLeft = layoutDetails.padding.left;
-    frame.itemSpacing = layoutDetails.itemSpacing;
-  }
+//   if (layoutDetails) {
+//     frame.layoutMode = layoutDetails.type;
+//     frame.paddingTop = layoutDetails.padding.top;
+//     frame.paddingRight = layoutDetails.padding.right;
+//     frame.paddingBottom = layoutDetails.padding.bottom;
+//     frame.paddingLeft = layoutDetails.padding.left;
+//     frame.itemSpacing = layoutDetails.itemSpacing;
+//   }
 
-  if(layoutDetails?.alignment){
-    frame.primaryAxisAlignItems = layoutDetails.alignment.primary;
-    frame.counterAxisAlignItems = layoutDetails.alignment.counter;
-  }
+//   if(layoutDetails?.alignment){
+//     frame.primaryAxisAlignItems = layoutDetails.alignment.primary;
+//     frame.counterAxisAlignItems = layoutDetails.alignment.counter;
+//   }
 
-  if (backgroundColor) {
-    frame.fills = [
-      {
-        type: 'SOLID',
-        color: {
-          r: 1,
-          g: 1,
-          b: 1,
-        },
-        opacity: backgroundColor.opacity,
-      },
-    ];
-  }
-};
+//   if (backgroundColor) {
+//     frame.fills = [
+//       {
+//         type: 'SOLID',
+//         color: {
+//           r: 1,
+//           g: 1,
+//           b: 1,
+//         },
+//         opacity: backgroundColor.opacity,
+//       },
+//     ];
+//   }
+// };
 
 const applyComponentSpecificProperties = (
   component: InstanceNode,

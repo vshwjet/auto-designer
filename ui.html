@@ -38,15 +38,22 @@
       color: var(--figma-color-text);
     }
 
-    textarea {
+    textarea, select {
       padding: 8px;
       border: 1px solid var(--figma-color-border);
       border-radius: 4px;
       font-size: 14px;
-      min-height: 80px;
-      resize: vertical;
       background-color: var(--figma-color-secondary);
       color: var(--figma-color-text);
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    select {
+      cursor: pointer;
     }
 
     button {
@@ -132,6 +139,42 @@
     
     #savedPromptsList{
       margin-bottom: 10px;
+      list-style-type: none;
+      padding: 0;
+    }
+    
+    .prompt-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 6px 8px;
+      background-color: var(--figma-color-secondary);
+      border-radius: 4px;
+    }
+    
+    .prompt-text {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 12px;
+    }
+    
+    .copy-btn {
+      background: transparent;
+      color: var(--figma-color-text);
+      border: 1px solid var(--figma-color-border);
+      padding: 2px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      margin-left: 8px;
+      min-width: 40px;
+    }
+    
+    .copy-btn:hover {
+      background: var(--figma-color-border);
     }
   </style>
 </head>
@@ -141,6 +184,15 @@
     <form id="designForm" class="form-group">
       <label for="prompt">Design Prompt</label>
       <textarea id="prompt" placeholder="Describe the design you want to generate..." autofocus></textarea>
+      
+      <div class="toggle-container">
+        <label class="toggle-switch">
+          <input type="checkbox" id="sidebarToggle">
+          <span class="toggle-slider"></span>
+        </label>
+        <span class="toggle-label">Add design to sidebar</span>
+      </div>
+      
       <div class="button-group" style="display: flex; gap: 8px;">
         <button type="submit" id="generateBtn">Generate Design</button>
         <button type="button" id="createChartBtn">Create</button>
@@ -150,35 +202,19 @@
     </form>
 
     <div id="savedPromptsContainer">
-      <h4>Saved Prompts</h4>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h4 style="margin: 0;">Saved Prompts</h4>
+        <button id="clearPromptsBtn" class="copy-btn">Clear All</button>
+      </div>
       <ul id="savedPromptsList"></ul>
     </div>
-
-
-    <p>1. Add one global filter to select BD Spock
-      2. Add a tab group to select between Portfolio, Potential and Cross Sell
-      3. Add start cards to show ctr, mrr, GMV Processed data etc
-      4. Create a grid to add 4 charts in a 2x2 format
-      5. Add a table to show transaction history, make sure to add a few cols with variant as tag</p>
-    <p>1. Create a dashboard with a chart component</p>
-    <p>Create a dashboard with metrics such as success rate, mrr and also add global filters also add a table relevant
-      to payments data; also add a chart to show recent business data trend</p>
-    <p>Create a dashboard with metrics such as success rate, mrr and also add global filters also add a table relevant
-      to payments data; make a tabbed interface to show the stats for different types</p>
-    <p>Make a dashboard with a table that has a col and a cell of type tag</p>
-    <p>Create a dashboard with a table that has all the possible cell types</p>
-    <p>Create a table with all types of table cells</p>
-    <p>Create a dashboard with metrics such as success rate, mrr and also add
-      global filters also add a table relevant to payments data</p>
-    <p>Create a form to collect merchant data to create a new merchant</p>
-    <p>Make a dashboard showing a bunch of stat cards to show critical data like mrr, ctr etc and a table to show some
-      monthly data</p>
   </div>
   <script>
     const form = document.getElementById('designForm');
     const generateBtn = document.getElementById('generateBtn');
     const createChartBtn = document.getElementById('createChartBtn');
     const promptInput = document.getElementById('prompt');
+    const clearPromptsBtn = document.getElementById('clearPromptsBtn');
 
     // Add event listener for keydown on the textarea
     promptInput.addEventListener('keydown', (e) => {
@@ -191,28 +227,34 @@
     // Add event listener for the Create Chart button
     createChartBtn.addEventListener('click', (e) => {
       e.preventDefault();
+      const designSystem = 'juspay'; // Always use juspay
       document.getElementById('status').textContent = 'Creating chart...';
-      parent.postMessage({ pluginMessage: { type: 'create-chart' } }, '*');
+      parent.postMessage({ pluginMessage: { type: 'create-chart', designSystem } }, '*');
+    });
+
+    // Add event listener for the Clear All button
+    clearPromptsBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to clear all saved prompts?')) {
+        parent.postMessage({ pluginMessage: { type: 'clear-prompts' } }, '*');
+      }
     });
 
     form.onsubmit = (e) => {
       e.preventDefault();
       let prompt = document.getElementById('prompt').value;
+      const designSystem = 'juspay'; // Always use juspay
+      const addToSidebar = document.getElementById('sidebarToggle').checked;
+      
       if (!prompt) {
         prompt = 'create a dashboard with metrics such as success rate, mrr and also add global filters also add a table relevant to payments data';
       }
+      
+      // Save the prompt
+      savePrompt(prompt);
+      
       document.getElementById('status').textContent = 'Generating design...';
-      parent.postMessage({ pluginMessage: { type: 'generate-design', prompt } }, '*');
+      parent.postMessage({ pluginMessage: { type: 'generate-design', prompt, designSystem, addToSidebar } }, '*');
     };
-
-    // form.onsubmit = (e) => {
-    //   e.preventDefault();
-    //   const prompt = document.getElementById("prompt").value;
-
-    //   parent.postMessage({
-    //     pluginMessage: { type: "save-prompt", prompt }
-    //   }, "*");
-    // };
 
     window.onload = () => {
       parent.postMessage({ pluginMessage: { type: "get-prompts" } }, "*");
@@ -220,55 +262,59 @@
 
     window.onmessage = (event) => {
       const msg = event.data.pluginMessage;
-      if (msg.type === "saved-prompts") {
-        console.log("Loaded Prompts:", msg.prompts);
-      }
-    };
-
-
-    window.onmessage = (event) => {
-      const msg = event.data.pluginMessage;
+      
       if (msg.type === 'status') {
         document.getElementById('status').textContent = msg.message;
-      }
-    };
-
-    window.onload = () => {
-      parent.postMessage({ pluginMessage: { type: "get-prompts" } }, "*");
-    };
-
-    window.onmessage = (event) => {
-      const msg = event.data.pluginMessage;
-
-      if (msg.type === "saved-prompts") {
+      } else if (msg.type === "saved-prompts") {
         const savedPromptsList = document.getElementById("savedPromptsList");
         savedPromptsList.innerHTML = ""; // Clear existing list
 
-        msg.prompts.forEach((prompt) => {
+        // Display prompts in reverse order (newest first)
+        msg.prompts.slice().reverse().forEach((prompt) => {
           const li = document.createElement("li");
-          li.textContent = prompt;
+          li.className = "prompt-item";
+          
+          // Create prompt text element with truncation
+          const promptText = document.createElement("div");
+          promptText.className = "prompt-text";
+          promptText.title = prompt; // Show full prompt on hover
+          promptText.textContent = prompt.length > 60 ? prompt.substring(0, 60) + "..." : prompt;
+          
+          // Create copy button
+          const copyBtn = document.createElement("button");
+          copyBtn.className = "copy-btn";
+          copyBtn.textContent = "Copy";
+          copyBtn.onclick = () => {
+            navigator.clipboard.writeText(prompt)
+              .then(() => {
+                copyBtn.textContent = "Copied!";
+                setTimeout(() => {
+                  copyBtn.textContent = "Copy";
+                }, 1500);
+              })
+              .catch(err => {
+                console.error('Failed to copy: ', err);
+              });
+          };
+          
+          li.appendChild(promptText);
+          li.appendChild(copyBtn);
           savedPromptsList.appendChild(li);
         });
       }
     };
 
-    // Send prompt when user submits
-    // document.getElementById("designForm").onsubmit = (e) => {
-    //   e.preventDefault();
-    //   const prompt = document.getElementById("prompt").value;
-
-    //   parent.postMessage({
-    //     pluginMessage: { type: "save-prompt", prompt }
-    //   }, "*");
-
-    //   // Add it to the UI instantly (Optimistic UI)
-    //   const savedPromptsList = document.getElementById("savedPromptsList");
-    //   const li = document.createElement("li");
-    //   li.textContent = prompt;
-    //   savedPromptsList.appendChild(li);
-
-    //   document.getElementById("prompt").value = ""; // Clear input
-    // };
+    // Add this function to handle form submission and save the prompt
+    function savePrompt(prompt) {
+      parent.postMessage({ 
+        pluginMessage: { 
+          type: "save-prompt", 
+          prompt, 
+          maxPrompts: 10,
+          ensureUnique: true  // Add flag to ensure uniqueness
+        } 
+      }, "*");
+    }
 
   </script>
 </body>

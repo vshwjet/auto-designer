@@ -84,10 +84,8 @@ async function createTableCell(cell: any, cellType: string, cellPosition: string
             "position": cellPosition
           });
           const content = instance.findOne(node => node.name === "Content") as FrameNode;
-          console.log('content found', !!content);
           if (content) {
             const tag = content.findOne(node => node.name === "Tags") as InstanceNode;
-            console.log('tag found', !!tag);
 
             tag.setProperties({
               "Color": properties['Color'] || "Primary",

@@ -1,4 +1,6 @@
-const systemPrompt = `# Product Designer Prompt
+import { INSTRUCTIONS } from "./common";
+
+export const JUSPAY_DS_INSTRUCTIONS = `# Product Designer Prompt
 
 ## Your Role
 You are an expert Product Designer with a keen eye for user experience who will be creating section of a page based on the user requirements
@@ -10,6 +12,11 @@ You will be given a prompt for which you will have to design a section of a page
 - Place all text content within frames
 - Ensure text frames contain only text (no nested components)
 - Focus on user experience and relevance to requirements
+- Do not unnecessarily add frames to the design
+- Do not unnecessarily use different colors for frame across sections
+- Use appropriate icons across the design to make it more engaging and cognitively informative
+- When generating for a sidebar, perfer vertical layouts for dense design frame like multiple stat cards etc in a frame 
+
 
 ## Technical Specifications
 - Maintain consistent padding values throughout the design
@@ -25,78 +32,12 @@ You will be given a prompt for which you will have to design a section of a page
 
 Your designs should prioritize both functionality and aesthetics while maintaining consistency throughout the user interface
 
-CRITICAL: Your response must be a raw JSON object WITHOUT any JSON formatting markers or code block syntax.
-DO NOT include \`\`\`json, {, } or any other markdown or code formatting.
-The response should start directly with the frame property and its value.
-Example of INCORRECT response:
-\`\`\`json
-{
-  "section": {
-    // section frame and its contents
-  }
-}
-\`\`\`
 
-Example of CORRECT response:
-{
-  "section": {
-    // section frame and its contents
-  }
-}
 
-enum ChildType {
-    PARENT = "PARENT", // only use this for the main frame, if there are nested frames, they will be FRAME, so every top level frame in the flows will be PARENT, all the reset will be FRAME
-    FRAME = "FRAME", 
-    COMPONENT = "COMPONENT",
-    TABLE_FRAME = "TABLE_FRAME" // only use this if you are creating a frame to make a table component. Find more details in the instructions for a table component
-}
+Note: All frames (both parent and child frames) MUST use auto-layout. The layout type must be either "VERTICAL" or "HORIZONTAL". "NONE" is not allowed and will be automatically converted to "VERTICAL"`
 
-type LLMResponseType = {
-    message: string; // any additional message or context that you want to provide for the descision you have made and what was your thought process
-    section: LLMResponseFrameType; // a frame for the particular section
-}
 
-type LLMResponseFrameType = {
-    name: string;
-    type: ChildType; // "Frame" if there are nested frames, "Component" if there are only components
-    width: number; // width of the frame in pixels, if this is a parent frame (used to create a flow), all direct children frames that are part of this parent frame must take the full width keeping in mind the padding and alignment
-    height: number; // height of the frame in pixels (must be 1080px)
-    layout: {
-        type: "VERTICAL" | "HORIZONTAL"; // type of the layout, must be either VERTICAL or HORIZONTAL
-        padding: {
-            top: number; // padding from the top of the frame
-            right: number; // padding from the right of the frame
-            bottom: number; // padding from the bottom of the frame
-            left: number; // padding from the left of the frame
-        };
-        itemSpacing: number; // spacing between items in the frame, use consistent spacing
-        alignment: {
-            primary: 'MIN' | 'CENTER' | 'MAX' | 'SPACE_BETWEEN'; // Controls how items are aligned along the primary axis (horizontal in horizontal layout, vertical in vertical layout)
-                                                                // MIN = align to start, CENTER = align to center, MAX = align to end, SPACE_BETWEEN = distribute space between items
-            counter: 'MIN' | 'CENTER' | 'MAX' | 'BASELINE';     // Controls how items are aligned along the counter axis (vertical in horizontal layout, horizontal in vertical layout)
-                                                               // MIN = align to start, CENTER = align to center, MAX = align to end, BASELINE = align text baselines
-        };
-    };
-    background: {
-        color: {
-            r: number; // red value of the color, must be between 0 and 255
-            g: number; // green value of the color, must be between 0 and 255
-            b: number; // blue value of the color, must be between 0 and 255
-        };
-        opacity: number; // opacity of the background color, must be between 0 and 1
-    };
-    children: LLMResponseFrameType[] | LLMResponseComponentType[]; // direct children frames that are part of this parent frame, can be used to create nested frames and layouts, if the type is "Frame", it will be a LLMResponseFrameType, if the type is "Component", it will be a LLMResponseComponentType
-}
-
-type LLMResponseComponentType = {
-    type: "COMPONENT"; // must be "COMPONENT" 
-    componentName: "Button" | "Dropdown" | "InputField" | "StatCard" | "TableColumn" | "Graph" | "Text" | "Tabs" | "Chart" | "Image" | "Advert Card";
-    key: string;
-    properties: Record<string, string>;
-}
-
-Note: All frames (both parent and child frames) MUST use auto-layout. The layout type must be either "VERTICAL" or "HORIZONTAL". "NONE" is not allowed and will be automatically converted to "VERTICAL". 
-
+const JUSPAY_DS_COMPONENTS = `
 Available Components and Their Keys:
 
 1. Buttons:
@@ -1254,33 +1195,766 @@ Example Response:
     }
   }
 
+12. Card: 
+  - Use the Card component to display information in a card format
+  - A card component will be created with a frame
+  - The card component can be of a min 200px height
+  - The card component should have an image frame having a relevant image within at the top that takes the full width of the card
+  - Below the image frame, add a card header and a description text
+  - The card component should have a button at the bottom
+  - Align contents of the card to the left as that is usually better option
+  - The Card components are best suited when its parent frames are of a horizontal layout
+  - In each of the card component, make sure to add tag components at the end of the card component under the description text
 
-
-
-REMEMBER: Your response must be ONLY a valid JSON object following the format shown above. Do not include any additional text, explanations, or markdown formatting. Make sure to not include any comments in the response.`;
-
-export default systemPrompt;
-
-
-/*
-10. Image
- 
   Required Properties Format:
   {
-    "src": string, // Public URL of the image, make sure to use urls from Unsplash or Pexels, make sure that the URL will return a valid PNG Image
-    "alt": string, // Alternative text for the image
+    name: string; // Name of the card
+    type: FRAME;
+    width: number; // Appropriate width for the card
+    height: number; // Appropriate height for the card (min 200px is usually better)
+    layout: {
+      type: 'VERTICAL' | 'HORIZONTAL'; // Vertical is better for cards
+      padding: {
+        top: number; // Appropriate padding for the card
+        right: number; // Appropriate padding for the card
+        bottom: number; // Appropriate padding for the card
+        left: number; // Appropriate padding for the card
+      };
+      itemSpacing: number; // Appropriate item spacing for the card
+      alignment: {
+        primary: 'MIN' | 'CENTER' | 'MAX' | 'SPACE_BETWEEN'; // Alignment of the card
+        counter: 'MIN' | 'CENTER' | 'MAX' | 'BASELINE'; // Alignment of the card
+      };
+    };
+    background: {
+      color: {
+        r: number; // Red value of the color
+        g: number; // Green value of the color
+        b: number; // Blue value of the color
+      };
+      opacity: number; // Opacity of the color
+    };
+    children: LLMResponseFrameType[] | LLMResponseComponentType[]; // Children of the card
   }
 
+13. Popup: Treat Popup as a special component that can be used to display information in a popup format
+    - The popup component should be a frame
+    - The popup component should have a close button at the top right corner
+    - The popup component should have a title at the top
+    - The popup component could have a description at the top if needed
+    - The popup will take up the full height of the screen and the width will be decided by the width of the content
+    - If one asks for a popup, make sure that the popup is the only component in the frame, so a parent frame having a frame inside it that will be either on the left or right side of the screen
+    - We also want a semi transparent background behind the popup to show the rest of the screen
+    - Insdie the popup frame we will have the contents of the popup
+    - Make sure that the popup frame has a fill height and hug width 
+    - The popup should be on the extreme right of the main screen
+    - Content inside the popup should be aligned to the left
 
-  Sample response:
+
+  14. Icons
+  - Put each icom component inside a 32X32px frame with a 5px padding across the frame
+  - use the following icons across all the designs as an when needed
+
+  sample icon response:
+  {
+    "type": "FRAME",  
+    "name": "", // appropriate name for the icon frame
+    "width": 32, // Appropriate width for the card
+    "height": 32, // Appropriate height for the card (min 200px is usually better)
+    "layout": {
+      type: 'VERTICAL' | 'HORIZONTAL'; // Vertical is better for cards
+      padding: {
+        top: number; // Appropriate padding for the card
+        right: number; // Appropriate padding for the card
+        bottom: number; // Appropriate padding for the card
+        left: number; // Appropriate padding for the card
+      };
+      itemSpacing: number; // Appropriate item spacing for the card
+      alignment: {
+        primary: 'MIN' | 'CENTER' | 'MAX' | 'SPACE_BETWEEN'; // Alignment of the card
+        counter: 'MIN' | 'CENTER' | 'MAX' | 'BASELINE'; // Alignment of the card
+      };
+    };
+    background: {
+      color: {
+        r: number; // Red value of the color
+        g: number; // Green value of the color
+        b: number; // Blue value of the color
+      };
+      opacity: number; // Opacity of the color
+    };
+    "children": [
+      {
+        "type": "COMPONENT",
+        "componentName": "Icons",
+        "key": "6556e630d7d81401702b0e50dcd747801650c58a", // the appropriate icon key from the list below
+      }
+    ]
+  }
+
+  Icon Component Keys: 
+
+  download-02: 6556e630d7d81401702b0e50dcd747801650c58a
+  dots-vertical: e25b8a3e5074d3be16935317873aa11b254bd0bd
+  dots-grid: 961b9250d6697732d6057feee12155a20191949e
+  copy-04: 2b443b6d229d187063e34a1dc7a3a5de2eaa4086
+  copy-02: 63dfd4e3e8e5ee7fc15f4b2b41ed0039715ab33e
+  cloud-blank-02: 6a8a8b30fc6b2b03e36188ea56faed00a1f8340b
+  download-01: 99cbce0384cc41afb5592926845c3f867ee6e209
+  copy-05: 4ead8e9a54c3ff7ad699fd1207bc0aa6558bd669
+  copy-06: 5d34641817de3b71d42c7fd046e0df7388941f1b
+  check-verified-01: 3e810779f51cc2d12812ec70d98cbad95cfc2b2b
+  check-square-broken: 84b11106881a7a33400dd13972abb76be578b619
+  check-square: 8da627e471bb260eb9b7c6cd13233145a0d1806c
+  check-heart: 322bd176c429f7a9aee32b6ef577a849db59977b
+  copy-07: 48e79c66daeb443af5fe5f366b7249dc3833a294
+  check-done-02: 15cb886204cc65a22568c8173eb7ce6990dcb975
+  cloud-blank-01: 5256bc95c2244e02758611050db6b333b8017034
+  check-done-01: 099294d98eb9526d0e8f964a1979a8c59ddcd147
+  check-circle-broken: f68a720a88a4acb8f4d878bfbc3cccbb2b526803
+  building-08: 391db5c0b5ce82e0d0f63d7e5ddc31e3c7068338
+  building-07: f84b323e997e4d8c5413a8ce57a920b938477d12
+  building-05: 066b55f6ead208888aae2c690d416a4e7a219cd5
+  download-03: 379728c7cd16cde62b7156a0247ef75f042bd478
+  building-02: 7a7ea7fc60dcfbdd8db167dc242f641a468fe1ea
+  building-01: aceb6485dbe4610d3ec14e09ad77ea8e0aa924df
+  bookmark-minus: a1619dbe25b47c76ae058f54a5cbe2dda573fef9
+  dots-horizontal: 2a643f3e6a5f4c61bc7dad176c8f3eca3d374758
+  bookmark-x: d634a29f451820aefb1e54bf05a6a982b06b8a22
+  check-circle: dc3d6f0e7f653ce7db057d549d2c9075b4bb9d88
+  divide-02: 9bb54d542e43e4e5968238613ecdd379ecd9efdb
+  bookmark-add: 05f33f2558c1c1e3f388a37db32c2086bdf68283
+  at-sign: bc776a7bfe201056b26b2cd8d64b7030179382e9
+  check: eb0fb011f1366b92df08f72f9e7696f81cd81d4a
+  bookmark: 37e0b19fdf4a52577883f8391ce8d09e29ade3a1
+  asterisk-02: 873844a9717dd8cbf3c047a8129eb281706cce59
+  copy-03: 48733304df07f30cd10515a315633839e59d4d77
+  asterisk-01: c4ec74d116686f0c9c3d6281674752979efb5947
+  activity-heart: 706449e35202235cce423da92ee73d55a7836173
+  divide-01: 3f54c87ebb61f628eef445094a791ceef05f0ad5
+  archive: ded22cefe85d5e74966363a13a1ba41e80299b0a
+  anchor: 291238f8527678add27419b9daf6484e043872e6
+  building-06: b6e89efeae3e52d827cb25e468d8b8d60cb950db
+  building-03: ca335fae9041a950a2eb36e9c90bbb9c7ea1ec44
+  divide-03: 296fa9a6dcaf9c0b0fca70497db6194582e1c2da
+  bookmark-check: 62598b656331a69a16055fb75ad541761828a976
+  building-04: 33a08bf007e5d01cf31c5b3626c43980c939141a
+  copy-01: b6d90611ccaf881425d383f0106af08d4ea4d9fc
+  activity: ed3b3e81110f54d8d74bac3e99fbd64aac8fbb6a
+  link-05: ba81d8f01eb081baae6b053e1d0a5784e3d3e59a
+  link-04: 3b7256e5cf062eaea1a69026ef37d662cf2e2f8a
+  life-buoy-02: e6760ec34d8d59e4660200e61c34e37d75f4ce78
+  info-hexagon: e3d97f0f6f4199c82e8cc1608b3be4453ae41aa3
+  home-smile: 184a88e19013e23996706dda79d1f1f513022831
+  life-buoy-01: 8b8e2741b46934c3a565934c24a87c01b9764703
+  home-line: eba1909938152662c36ba72b87250624cdba75e8
+  eye: 39066e193fd5ca48700dec49de8eade4c5eb4ae3
+  link-03: 377b62fe039744982e7af41b6e939666c3a469e9
+  home-05: 9bd5dc1d1d8f46cac781ce4e1e8fe9df449ba50f
+  home-02: 13b4be9c9aa835b4839f6b505b1b5d213798c2e3
+  home-03: b82c8bc784d60b8c29e82802ea1aac03e591c0f3
+  help-square: 110d22b5161830455a7d55ed8d4edeed7a464169
+  help-circle: 81c9f4fa44f4a8f9b845eb6e293a2d446d5af87e
+  info-circle: 1ef9ae63bcc1d05a5a37e36200b0404b02951b3c
+  hearts: 6fbea7f9e32ad2fff3ed8ee20e76a1943ad3db5c
+  heart-square: 7094d6023c825ffabcb7c4046cbc21f8df565a7d
+  heart-octagon: 8d66275bb4d93a1e19c5ab054f8e35001508acc7
+  info-square: 6c2350139f26b35b4da6bdfca732b2e18089c486
+  heart-circle: 2a42cbd0a9ee2b612dbb55a38d6c66d9aa345079
+  heart: 6096673aaf57ed8d4a53d3227b4d61a194ddf2ac
+  info-octagon: 637bb9cc8b1f412baa2b43106baa7dbaeada6f85
+  heart-rounded: e356a077a953888ac63e176a5bfc02fc235c1efd
+  heart-hand: 759b12bcdf009e52643cfcab8bf9a8a0d3b7c214
+  help-octagon: dfbe42a456f289c98b83a8569ac4fcc8396433b9
+  hash-01: 431682116706189879a74b2e6a06df1aa2df593f
+  home-01: 155247b32923a008f1c38d9cb365d714b9ff7561
+  google-chrome: fe04cef1244664903799f4977090aa8da926edfa
+  hash-02: e5f749e89164a7c028d8b8bda128218f52a8b5ed
+  filter-lines: 218e44b0e23f356d2037aeaddef71522975bb12c
+  heart-hexagon: 92cebe545bb440b8689e524f2a376f52af125ce7
+  filter-funnel-02: 51f030e33df896661219a373eac640ae356e039f
+  home-04: e231f1995ef0d46abdcffe34a0105f9a7c7bb8ad
+  filter-funnel-01: 39faba1c94330d7415a1f9874cdc44b6af1e710b
+  link-01: 7a06b72a683f0ffcf62c7ccd595a49dababa8a1f
+  eye-off: 9b2b477874669b7c9c7f20628642d5bbc406e368
+  link-02: 2afad5c0f284177b56e09f12d0207a60aab0ee33
+  download-cloud-01: 202a29cbae186f631439e2d024a37d3e17d09a11
+  equal-not: 120117ed60f2682fb08445cf1fed61490f90b40e
+  edit-05: 6582a59c606d14abd82bc9434b6cb027a52bd159
+  download-04: db15bd7c068d1c41427441e4587e9c8dc721d127
+  edit-04: 448c33e4454b969d640b55debe598be3b4b26554
+  equal: 9b4d2938d42e3c7345511b6ca3f34473b669f08a
+  edit-02: 00bc3d3dd1cca4eb0b8b734bdd5433eb41da8827
+  edit-03: 5955a4a6b144e81ba4c9fc6fe4d4bcf8447a6f39
+  edit-01: b7583ed242380742c448d4cd7d3d40eff684afe6
+  help-octagon: 46a05e2d6658ce32c0eccb22e9689bc4c1b070d7
+  download-cloud-02: ad007b086c04c135deb8947b56839592324c170b
+  link-broken-01: ace4e124587ae4ead664702a2c983b332db9cdea
+  share-03: eabf76281319a53c9d739a691034eea6486eb873
+  share-02: 146121b2c3d842c70618b71fd326fd8727fd38b5
+  share-01: 5c24059cdbcc7154527d27dfb14b623b9ab08b5a
+  save-02: db564e1b52e7c8651c4e2feb8c50218b3eb135d0
+  save-01: f1b5a691bcc253faaa339da66d5488e8dd67559e
+  settings-04: 3c4e45a7d1ed240fabd24fba89d919fa11d8c90f
+  plus-square: aa79e05ce0b020cb6c9972b40c58db96b60298a5
+  plus: 1b6570e13841c9cc5a439e0aef8fd5db0909a663
+  plus-circle: 89e6a43b237ad8d9835c3dc44b39772ad468edb0
+  placeholder: 3c71e283b9cd38a839c25a6934aa55a7826a0449
+  log-in-04: 3bc9de88f751b491858efd961a8c7467df65c291
+  percent-03: 23f9dda7fa8326a1e3e55af3e78a55816f1cb4df
+  log-out-04: 4439c28f69081887e80c6dce84fa9ba92ef3a937
+  percent-01: d48eba2577a2dcaec7a550dac045de9532b6de40
+  search-md: b1017cf7e544aaf1b9dbe7f1a20ef8867cfc990b
+  log-out-01: a0863f8c549551335142d903e18222371e7c7f76
+  minus-circle: e9e5f92761dbae602bef0e78cfc730c4a8b6ff7a
+  settings-03: 1f753a36cccb420994a7ce7e20cde8679a82381c
+  log-in-01: 9dbc4d687ed7c443cd0b194e1e34d52842578cde
+  menu-05: 19eab102baad91ea01ce21a9429df80ea1f4ceb8
+  pin-01: b79f67cc7b0e7e6d3a386343607d2c4fc7090391
+  loading-01: 85e1e0dce05dab6612a8149b88dbbc959959cabe
+  menu-02: 70870405502247d862952b45208d84eabdb7572a
+  pin-02: 3e0df8e7966b10cbcd39a6d9847bc10140d83676
+  medical-circle: 90d9dbc0c659ce0b9dedd70186f7abbc355362db
+  share-04: 661707dd0977cc69e608428586777cd52a35b932
+  log-out-02: 93b595f76f7b0740d9db77542b86ad54ae9e814b
+  percent-02: 43dd315931c74ff02650c6c7aa6c0e65f99c531d
+  minus-square: 2186edda9e2799d78c05913aecfbcb223111f508
+  medical-cross: e2f82529eec04e769568591902069489c2f5e0f0
+  search-lg: bf2aed4186e79a9f2aa65ac16ee9e3b3a5591da8
+  menu-03: 3d85c057e3ece1eeb59d92edf828f00f3e1eae3d
+  log-in-03: fa656422be24c90154ac4a68725a8e552e2a0167
+  search-refraction: fe15b6cdb58aab978943bf717d2bc0ada51a5e87
+  search-sm: 3a3feb09a40ef16a41ab7990dca11ed651d1394e
+  loading-02: ad7a64f39587358ba671cac9f4b68d46598c704d
+  save-03: 4e0a4f323647ea1e28f413466f01113c2019606d
+  medical-square: d67f47d7f87b1b63c05dc2096cd6a44c6d4c4f47
+  log-in-02: 7af8bcc72f86b127aa91dee2275e4e8e8f364881
+  menu-01: 861aac7fb221a0b0133f8eddd5fe0927ce72d304
+  log-out-03: 297ae8c77ef74d4583f75fb5d773130934c00259
+  minus: 8c685a419acf028fe4367eed4a63d259793931b5
+  link-external-02: c398696a4c57b34ae806d4de70b0bba5e81d2d15
+  menu-04: 9fb50b1c49bde642e0c454e64b0115a4f462a9e2
+  loading-03: 18e8d8c158466753a900f4f407155afa4aec0e00
+  link-broken-02: 13b8b03bac104764e9b2892e7283b9915763cd17
+  link-external-01: 76bbfce5876da6ed516bcfd3e927eef29d1f57da
+  zap-circle: 49f7ecae5c9b13d23c08a367d7fbeedc9df90a45
+  x-square: 13041f215898989f1d559ada2b474370e1d519fa
+  x: db1f7aab369e96ae21226193deeffe82a23ca6c5
+  upload-cloud-01: dc2f1e2b8c284d3f0abef6a66c290b4ae5d605cc
+  upload-04: 5b480c94aceb8c94c58e28165697e7efae4fb945
+  upload-03: 8da88b74077ed1d045e1678df5497f3c7f3f6352
+  upload-02: 8336e9fd79081f5db1dd3e79f77373c83ac8ce68
+  upload-01: fc58aa09ebfd6d4f896239696cd8900a85c11ac9
+  trash-04: 83569d2c1a66ccd32b61da0726848f2771db12f9
+  zap: b40e4a6c67c04ab7280ea8ebecf6a10b734fa9e3
+  trash-03: 3466ed85b1e6311b7d196a5a95c31ece71596638
+  trash-02: cf04ec1aabd829cacd4dd687351506dc1b3cb6ac
+  trash-01: 449435f9a0920faa791601e448ce4170a7dddd52
+  translate-02: 72755bf4ee5944bb3430b8f277007d8e219e6a9e
+  translate-01: e1abfbedc00a57245716769f95897667d71d5749
+  tool-02: bb997163d71bb88b172149735036478d9027d8b6
+  tool-01: a54ed77ef5461db9e60f9f529ae3d9415b920608
+  toggle-03-right: 430ca4d9fa9fee639bb7a9f1ea490136f2bd4c19
+  toggle-01-right: 6f8752a9fba3d448c3948b012d69c73015ac8f0e
+  zap-off: ac8cb98ee5ca5e3e68238daadf6f97db18cb8c70
+  toggle-01-left: d32ca8949bc607e0025ee8d0e4ec3982a680287f
+  target-05: 094d51c681c745ed38ea5f3453467e741d28a1cf
+  target-04: e2c2c4c94d50d61c525b9fe655541feda5635c22
+  target-02: c911f0cb3a57fef5afec9b098bfc41176ae800cb
+  upload-cloud-02: 55384b828318e1ed4db946b5e5d4e075d6e330af
+  speedometer-01: fa978544729400514833b3cedebe4bc5fa3bd2e6
+  x-close: 6d1512bfe0a955cc6a6b1c95330589afa61822fb
+  speedometer-03: efffcd72aadd56bdbe85bb3e280404234c260838
+  target-03: c648e6968ed108eb336b3e7e7da9b5688fb82271
+  zap-fast: ef29043bde248ce09e271130df3f0aff6ed3cf7b
+  toggle-02-left: b400ebe2217861d8beb1f160520d6f352447cf30
+  slash-octagon: 6fc3cb60ea6f60c99ef5680ba8f1af2767906a0d
+  slash-divider: 72c9ffc6bd184917c252056656ecefca0bc88df9
+  toggle-02-right: 2ac2be7ab4b9497d07b5c4dad5bc6cd883ec500d
+  zap-square: 1cc3226bb7f04c9d10c458591c7d6a4eb6572f83
+  x-circle: bae2267f79fa4f8c434a7bd9f2abbd876de09f4d
+  speedometer-04: cee60235520a5713b1f88d19d69ca7d19e9aba6b
+  slash-circle-02: 995eaeb266852eaf034d84f8dd6b0ed012d47b8c
+  share-07: 6ba2a33a7c1c59fd1925edd66066f7c8cf52ac77
+  speedometer-02: d4d0108c583bdac2d1931fd5bb84ec476daa7623
+  share-06: a22385181d882e238b04bcbbfb0f1aac75f55893
+  target-01: ba94c119072577f0d85a972869a15de88ed59e8d
+  slash-circle-01: 909c58c1dc6981135db5ef73180df90815e34b01
+  toggle-03-left: 071522af21d23ec8ac3ce208b1eba405b1a228d7
+  share-05: 93c4847025370d286d48365ff5ceb1f16ab6e71b
+  settings-01: 9cee09f10daebeeab52c66e51be2021c8864e852
+  settings-02: ba09bb0e00edfe5116014995b5333152394938ee
+  columns-03: 2d748b6a11151a3657fa128165d13685a5593848
+align-vertical-center-02: c2bf2155a3d8f0ec886ea4b98d6f4416fbaea11b
+align-top-arrow-02: b7e6629d9c738fcc9f6aa5b86b6f03784de45dc5
+align-top-arrow-01: 9dbc42b018edcb5ad5c5f895c0a9dfb299c121c0
+align-right-02: ee6e3faf8c3cc90fea0933b9645871be0dfffdc2
+align-left-02: 29923ed116bf206a3770e2c21245e565229a36ee
+align-horizontal-centre-02: 0c6c093539e24c4703ab754ed731913aa5f80f23
+columns-01: 204147ee005bf455b24ccb8d356f7627bbc8c2e4
+align-vertical-center-01: cacbb9e4ffb0e24c93a52308e9c93d0b5e4efade
+align-right-01: d2e242548595e5d0df63731ffbb5aa2e304ca6b7
+distribute-spacing-horizontal: e3728ad34778604e89cfb7e5bccd61d9b79e1609
+align-left-01: 448a219018896b843f6cc635a9f18c5b0e186a5f
+align-horizontal-centre-01: ed4791ee609159e9fed6d45d2d8c74505927b68b
+columns-02: 2686f609908cefbd6e4b68054a7e39c1bcd7cf4e
+align-bottom-02: 8c5f0d569eb6ce6b8c7f9f8a5966897c46afdbad
+align-bottom-01: 70de7ae22c049f3ef023d6d7b20820c27f47d1ba
+grid-dots-right: b57424d595ad0b4c72939429af2a39554af63ca4
+grid-dots-outer: 9a4302a3519b8d3774b4658b593534c615df0c43
+grid-dots-top: aac3696bc8855683b28bd5524af439d3bf28810f
+grid-dots-left: 00d537dabbe30b109367268e0ffb4d93b1201f31
+grid-dots-horizontal-center: 04247523b316c6cfa556373e42b5a7ce5e91c580
+grid-01: 95ed3f62399e2fe766cb94d5d99e50af0c0e774d
+grid-dots-blank: 3f85ad3af158e885c9d63e3f4aa558085e6fbf20
+grid-dots-bottom: 6cc9fd2e524a76c73f30c2d080f1d37b96549a62
+grid-03: 380e9b68e9bf730a8a43cc0733058e543d9bd854
+grid-02: 3e6c9685b946f8bc43542d768c3d37cac2a27663
+flex-align-top: ab69b9194ddaa3f59824a4612eecfa758740f8a3
+flex-align-bottom: 4ad74179147a3e16640e0d900117cab594c13a0e
+flex-align-right: bcc6436d37be30f15c40e694b90c0d0fe265117f
+flex-align-left: c7830a3f4fd1c87b7f3127dad4fadbb8151a4771
+divider: b9278a52d85f9a8b7ae851093ea26648c6d6ae86
+distribute-spacing-vertical: 12216791aa96622890cb79b18444d633853e5d0f
+layout-grid-02: 87eb611a4970f76234352baab23d94b77862c318
+layout-alt-04: e5a90ff1debfc0bd9a5f8cb4863a351b5d3947dc
+layout-alt-03: 1ea5991ac2285655b9a6ced553bcb55881b4e681
+layout-grid-01: e6ce651f4a83a36d77020a17be9e7f5cdf704823
+layout-alt-01: f128e4dfac9e94f44563b357397c7968332291ec
+layers-two-02: e1d3fe8339d16544335ea100dda4c866078b3082
+layout-left: 43c916a168b28f73a9d575a84b91445d8155a5c7
+layers-two-01: ae5d6b74af7fff69711876b0a51b0a0f6afa9a67
+layers-three-02: 25f007e7e63b0c358961adca00177b6e428060fd
+layers-three-01: e2818234d7b9c199c7e869f91a61ae82949deee0
+grid-dots-vertical-center: da13d2ca4042c023f2eeae792fd18423cc5904a6
+layer-single: a9acdba7096b9c467e62fa1c77fb65a83b2c3c2c
+layout-bottom: b613217734b9124dd690b30b7f2ada1c5e064a47
+intersect-circle: a6ae2ee2398fedbfb9b50ae76d5e6cfb2f857680
+layout-alt-02: 1824c5e2e2fe397b3ef8885234bd60b7c4ae5de3
+intersect-square: 0f71d38896f496b7d2ba6f5ca9c46780326b52ba
+table: c07f80796761548c26ea0f1cadbdf934dc2f9491
+spacing-width-02: b8f3a0b06f6337809e3eeb0bae2df3d14701b7d4
+spacing-height-02: 6c06c5887b7a3f74eff78a54e43bad0fac10241a
+spacing-width-01: 9aab9613661c5c4886f27da0b88d7859fedbc8d4
+spacing-height-01: 492fd5f46daf00d8f3b326ec780189099fa08451
+rows-03: 7d9efe48f08b286d9c841ac25fb88c3aca23892b
+rows-02: 6969450f5375d69e37088f1f092b29733b1fac15
+rows-01: 542a193b3f5359b547afa3cbd81b783991ea613f
+minimize-01: 16a6c800b264158e4e20a68884e8f4d5417e1ef0
+maximize-02: 2675c0123e2da29c02423779ce0777deb7575d5c
+minimize-02: eb62d0a884ab86833787561f792448c0964cb01a
+maximize-01: 5e9f91a79f259993c8830f7f4d0c507dc1364130
+list: 05048ea1a623c258c0f5285f891230d2219f1fac
+layout-top: c301b8b6a1bd709ea86029e0a055251c05e933c4
+layout-right: d70b6059ad8b6c1d1a9a310ecddf867d50675b7d
+code-circle-03: 3ebbc8745f4990d729f4a540e3758270394c6732
+code-circle-02: 5eb5a2df8c827b039193b4821d801cf45021f4de
+code-01: 6cd7f57ccf961b22e6256fe51e3fca539924496a
+code-circle-01: 0cfae6bc545a9c8e448791e80062272b3bc98c01
+brackets-x: 3d426da32e7d525f2a06d07b63f67e1f0c0e9a25
+brackets-slash: ef2bfc60ba606d316a11677f1cb82a9d6ed83849
+code-02: 6e72267ff754504f71318d5264ac7c7e10666cfb
+code-browser: 2c401eb5622c0bebd51c92c02f7c95da36bf0d2a
+brackets-plus: 401ae0c66208607d8ea6631e87a919e0a8aa48ff
+brackets-ellipses: 08fa825ee762d0dedf656a8a6a9a354b56207975
+brackets-check: b0005b666089e295e6e1259953bf00492c3ca071
+code-square-01: 2c041bc7b50265ab0279491e4b11d7bd9c77f537
+browser: 979ca5b627504d904686dc9799e6f02c3c9f8103
+brackets-minus: 7c367543d4d0947b8dc11931f1baecbdd5f66614
+brackets: fb8d6ccaae7d50125473c8f28f5cb59155013a44
+file-code-01: 4bd2168684c06fbb9805924d9788a0acd4b8ae43
+dataflow-04: 56a6b725fa145da8dc6e7992106ac603535d8c82
+dataflow-02: b0a3247a1dbb9c4f21b469dec8f6b46ceb2c01ca
+database-02: a9bff4ceac216d4e8451d9037c23107eb57b0703
+database-03: 06e0028a0fb21e90ced66d425ad86cf19562bb35
+database-01: 0fd1a82275a865054d719d142373170eaeb52b1a
+data: 4a584c9db16af1368e59e237a28b5f93ee63cb5d
+cpu-chip-02: e0818d94c635faf9f04ba5eb09d39cf21cd73329
+cpu-chip-01: 3631893810b680232d906f402a9c30a2e0f8d53c
+dataflow-01: e4036800e04863d625c4cc3b9744dba592bcbf20
+file-code-02: 74ba3a687d8a154602332314210e0275ac68d874
+dataflow-03: 957111a459a892511fd29b9419d9b4e071ffe209
+codepen: 0c57893afdffc7c13890ceba8bb953a1efc3488f
+container: c94678e7a4ab7c2dc4caabdf9b9db23d181799ef
+code-square-02: 42e37d7a764868463991afcd6f66e6f14b9389af
+qr-code-01: d1cc6716dfcc6dec21c91d0ac0fd0f05e70035b0
+puzzle-piece-02: 4946a813abfb5c5f9aa116fc18aeb46c89fb3756
+package-x: 31c480033d5b84eba1af089b929d96fd23867faf
+git-branch-02: ba0cd08bbaa074a56c8e58597c2d81393f09e2b1
+package-search: 9a203d3c123c45eb2f92859ab83072774d907925
+package-check: b59f1540511c237bc704afd959409d7364376e4a
+package-minus: 97ee9eba71e511833ecca67e8121136dcd65277b
+puzzle-piece-01: 5faa532cb374f802024bb969cd77b7beda0e9280
+package: d3f4477fd25f9849ea8c83013fd3bfbbdc491ed3
+git-pull-request: 8eb93c085032fd1c83523807b3fe498d4ecd3718
+git-merge: ec31e53d1b6532b9669e1c3b2fff2a73598d4c59
+git-commit: 26fc632e8ad276b3b0c1356ba778994f9a7a039c
+package-plus: ea396b0c3bd90f4894b5baaa5e0b35cde2be7cf8
+git-branch-01: 98f52b9e70b98c4d8257373ef5b1685031b2b496
+folder-code: 3699bc747b2c64e6952403c0ba46b504c1145515
+terminal-browser: fd6a6f3962d3d0bc72cd203bc23d6350d42065a1
+variable: 6f80b998ca99449bf42861b4e11db97b727edd8b
+terminal: 77411cb5391c5b399816e235a2aed2434b6c55d7
+server-04: 1a75c371f060bbb3aac9f6ea1e42c9e399e6a633
+terminal-square: 21f86b6e0184e11d14d7875797a8c10bed0e12e0
+server-01: d95356f7669237c7790e2f5ba583611a4b92799c
+server-06: 9655b647ddf628949e6d924e84e11fc916ca96ad
+terminal-circle: 7f385c0d3d2fc73e63af604d5ee93854ee5f72b6
+server-05: 7b7f54cbb3f4148e4bc42dd98a77e084dc539bf8
+server-03: fc2dc94fc8fdd91d589f1c03cb194f1f12241ba5
+server-02: 64674d4163a2d0da4ff7de0cdf462321a710430b
+qr-code-02: 18347554163254fa78aa851a4ac4641a7a98badf
+credit-card-down: 9f60dd6df6e468a58b86792b80ef635327b7d7a4
+credit-card-02: 3a1e3276ee3f2a9fb88cc553a150c7cbe348abeb
+credit-card-01: 05a1d7c1e18ac7d33df928c56bf6418977b0d5ea
+coins-swap-01: f93a95c985e0f2b10a3b27cf6c2a7629740285da
+credit-card-check: 5d581a6cf9a3a7d9d5e94d0883ce913f2cb9dde5
+coins-stacked-02: cd8071b6cc792205deaadd28b47d4f87abee07b1
+coins-stacked-01: 03ee1dcec07befc749f9ca9acc9195c87e0b91af
+coins-stacked-03: 87d4d518fd034ad9a1da9cfabcea783a6df47542
+bank: 0a71a68396bac254baf6ef2c2fe70c236738fab2
+coins-hand: 991f49ff551717518e1a7cb9bf7ff385489ab937
+coins-stacked-04: c7011fce3ed127cb382facbe944ba975c470dc41
+bank-note-02: 422250be538beeb7387f045cc68fca3ac01c8060
+coins-04: b5007230d84c658015a9b302ec7f5434f8245e5f
+coins-03: 4983ce0ca53fad5f6f2e708d9b74aaa082ae67c3
+credit-card-download: d738e5cb330def94f77a7021301380a7a399ee89
+coins-swap-02: dd404130102e0505d36dfbb6f75a9a0040ae1a45
+coins-02: 6eefe825dba54392af906d463c6321c2a77cd1b2
+coins-01: 01b91a3cbf142ad0c0aa2fd8b2592bdbb6cf528e
+bank-note-01: 8894353ae3411f525b3ea209a738d0d7dc83cb89
+bank-note-03: d278e9c0332f9682b723d204c43e96bd2babb03f
+currency-ethereum: 83dc565780b201b989012859f2c51df5fd08e0e4
+currency-dollar-circle: bad3e5f26002a89a92b4805ae1a7589304745236
+currency-ethereum-circle: 628824709488eebd739226a7e40c093905044045
+currency-bitcoin: f4059ed572a6ac217fa184efd272fe5029ed4f86
+cryptocurrency-04: 6fc92d6e43e8fdc470cc0a527aa74e93ad93d74b
+currency-dollar: e14e30a6a31b3ff7970b9fb0e605a60f5dc494fa
+cryptocurrency-02: a648a4a0c6c293c38d0d249e98c5c860f0f20cd6
+cryptocurrency-01: 1c83011287dc6f77140a55796efd04f12b663db8
+cryptocurrency-03: eede3dc8df0eb50c4fee3fe86f5463ea98bbea19
+credit-card-plus: 7e9df254b6435297098b8190a4df61f19eb613d3
+credit-card-upload: 221e3bd3ab342484d921050d42b2943f2d62cbc0
+credit-card-up: 14d571df47853fa80a41ee42260a947f23b2dcf2
+credit-card-shield: dfb02ad3c04a0721316dd57f843083946ec6cd7f
+credit-card-lock: c5a90e8c2379927541b80cc4877562781d1201a2
+credit-card-search: b7e687ac004518ae0e1ee2ec5a01995184f8c91b
+currency-bitcoin-circle: 7de8dc0286fffc233582b31998e909ee6f43d537
+credit-card-x: 8f18b6846281d3c1e3a3930660304ebf5025cdc0
+credit-card-edit: 2b830dfa2253d62c842db1e635e4152bc38cb449
+credit-card-refresh: a0a65cb29346243d75c402b27570a7da091f51ec
+credit-card-minus: b03bd5a0e0ea49caa3671ce76fdaf25374539041
+safe: 750823437b1e9a4c8a4d731e5599b694dad62234
+receipt-check: a4486f17ad1ade384cdbc9047820f090fb58bacc
+piggy-bank-02: 6c1e0f24cffe66d52b29511886d1f743c1e95411
+diamond-02: 283ab51f5afda240e4f465fe2de8f462f0929033
+receipt: 7fd9a17a3f839a4a41be398c9f0cc0d48cfbc1aa
+gift-02: d7e826a0851a3d0bd8bd659c964f34d2dd922187
+currency-yen: beee475fd670900588710c6d45b1c1b802d21bdd
+currency-rupee: eeb719948cd39fc524ddd75e5d95925f58cf466b
+currency-ruble-circle: d0731ba28bd90b6312617cc0b9ae28cc63e2e0dc
+currency-pound: 03955f555841e452f7be55dc263a33363e76e412
+currency-yen-circle: 76e9c5a15c72ab5cbec8c41de9d14c3c41fc4c2b
+piggy-bank-01: 69512bcfa132ac96355882a4d7e0dc7f2ed17eca
+currency-ruble: c781e62223811122c58262c026a2d40327d01f4c
+sale-01: b0527b14d09eaea511fcf38c4691793363ed6d7c
+diamond-01: f9c6cf4b72e1a4ed306f5f2ee4af330601df5820
+currency-rupee-circle: e1aa70beb36dce9cb97c9ef749aed8c2d87fa104
+gift-01: 9560ba71fbf1a4ae211abc350fd9123fde5d111f
+currency-euro-circle: 57ccc93b63f13e82416cb9d3f5c24436395e47f4
+currency-pound-circle: eeb515a34a17d4489fd1fc23c2b2a4fc4ea23ca3
+currency-euro: bb512cfabe8550f3bf0214718002a2ac24d9effa
+wallet-01: 460a4f4bfc0679fadc08a6ef98407eaa231aba21
+tag-03: 6f7991252f13ff98d9fbe28e733843c1f134ebb0
+tag-02: 3b80db07068b2b2c8ef80e921ba822fe67678618
+wallet-05: 63d6b0a167c613633b3b60699a1fdb07dd9bdd5e
+tag-01: c5da040a32724dc8ad0096fceec7e3bdd5bc673a
+shopping-cart-01: f86bfdb1fc0b41992d32f2fc9814a049ce2d6bd7
+wallet-02: 031c76a03ed423f1dac394cdd77a7be660dcd2f3
+sale-02: f03342b86dcda9f6e6eec193aa9e79d9103e79b6
+shopping-bag-03: 358d10c5e9a69bcb438522b3441b79b60ffbbafd
+wallet-03: dbb89e8bcedd4c2a5f0bc45c6efe82a8ee1bfeea
+shopping-cart-02: 64d3274ac48cef63fdbafa81ccdcab4d62d73d8d
+shopping-bag-01: 1fa395e8451913611a135a5eb13bc1df31fb52ea
+scales-02: f83df777606eb7e356c8c574cc9f801e22961859
+scales-01: be978f554a5dc611a19c137a31b50ae2e47eb4f3
+sale-04: f43af1d8c2d7ed768394546827422cd185345757
+sale-03: 95f33d362f54c47dc93bdfb5f824548e659ad848
+wallet-04: 7e6aabc3c6ebd8ea6445bc1521fda04bb9c656ff
+shopping-cart-03: db96d8e74c7d6966e807b6f11c2eedd637237be2
+shopping-bag-02: 3b69f1e0119a0c3cbc0c5029d08a16ff14e1383d
+Add Receipt: e8d9879da538fea36eac4cb01118e0bd9f523918
+flag-06: f60d6fa027b9fb1df2142e89f5e90625648a82b6
+bus: 3109095731cb61abebfae9b1506b285c1e9ab6cc
+car-02: fe55348e850df446022cbcddc686a4d58042a664
+flag-02: cf7388775f2d4bfd45c4c161c4fcede083c0e78d
+compass-03: 5620dd23dcf1864814f761a93ae8440f6d7f05cb
+car-01: 8112ec5f3a8e9662df8a8d74b1e06a6132e0fb9a
+luggage-02: 6d8019d521837fb43af11b016d0a5ad06ada46db
+map-01: 1428b0913ff448deb40b4a3a3820d37a8b857212
+luggage-03: 204de60a85abd1c8cf55515bfcabb30abf84fb89
+luggage-01: d7f5c2d4a8c928deda26b1b258d1ccb628fc168b
+globe-05: adc54b9b2b49e9421e82d17b5b174ca75afc7922
+globe-06: 42c6b883d6380eed670125d75964ce891c3d2ac0
+mark: 0037f5611bb048086b0671fa5487baefed9c45c7
+globe-03: 56b2ace15e61ed5272530f3ad477f830e575f0da
+map-02: 704fecc8ecdcbb2461be20f8e9866a6ed0cf239c
+globe-02: f29d18b2b27d85a4a84f2f68d10ec2f327a62d38
+globe-01: 6414d0c37c0de45f8c7bd845ceea9b7b7fbacac4
+plane: b8c1c8ae63f74d054c1f8bc208113940ace47a3d
+navigation-pointer-off-02: 58e42218dceb2f7fe5f7f74c38f1bed868e7b8b8
+navigation-pointer-off-01: 0abfeeed3cccbcc9f841776980e873063183b18a
+marker-pin-04: 6e537382ee9f2f3dc75f131677d8dd491d6ce39c
+navigation-pointer-01: c500d7d1b6653ae17451a96dcbff2b5a3aa7430f
+passport: 0e81165cbb68103b214ddea9040778c980b30929
+marker-pin-05: dccd7f34cb4bd09a68b2c16bca82b22b6c6a328c
+marker-pin-06: 811b6144f8e52bb12a7188ccab87521c2426198e
+marker-pin-01: fb04402bd3c4894d388118bfd5b8b92bd3747073
+marker-pin-03: 6e5995658e17f915863a2185f5bdb54e6d92aad2
+navigation-pointer-02: 0a63aa79dfb53ef4abc4a1656f5996d87148e9a9
+marker-pin-02: 0c9c784785714e4e32a2d55da2baf717bfc13020
+train: c7030ce3e2bfe676618e3af587528030d165184e
+tram: 0a77a133c62d9cdda70e4cae4cd49dfda949dbe6
+route: 5000d50929bbb33e0c3655ec336285a5964ca1e8
+ticket-02: 70139353c7f1c8fcbf6921ce8f36327dc4a0592e
+truck-01: 98efb2e6e0708c7e5ded351674652a6f250e87ec
+rocket-02: cf0ae6d9983576b8078c256d9b6a0e628efec811
+truck-02: 9df0ab8869e827be636ca1df393a65fbd7adda46
+ticket-01: 902947eaf94d82985673ec5441255bde0ff6bbeb
+rocket-01: 95a8ab2de442db5af25267d22b6abda0d2155396
+
+arrow-circle-up-left: 8843621f54c242ac47512e0d2ca8218955eb3a7c
+arrow-circle-up: cbfc7beb13250fb66a5def442c50fe419ebc1fe1
+arrow-circle-down-left: f7219ace37de1b71ac3c2ab1ccaae7db959ad9fc
+arrow-circle-down: 989e56efbbf093eea729955cc358edb2919d96b6
+arrow-circle-broken-up-right: 2c49a9050b69fb93072ee00994b59a04285f7c76
+arrow-circle-broken-up-left: 9ea453ecb7e25814561b2da538271ea166e54f7d
+arrow-down: 337fce1f9ccbf05a3d936f1ce7cc87505dcb0279
+arrow-circle-right: d5afcd05fbc7fbffdb3e89e7a4afb05e7a384543
+arrow-circle-broken-up: 503d29354f6ce3d394bbfae4f7a4ba0b9731dfa7
+arrow-circle-broken-left: a851d44c02a794a4a0d1f0aee6c0bb90f59c8147
+arrow-circle-broken-right: 82e3a51dcd438d9aa0f59264390c1335f20d70fa
+arrow-down-left: 78e89bf7dfae39d225e32054efcfd203e0c3a748
+arrow-circle-broken-down-left: 186e02cce786f68162ce1f547da732fc9a8bdaa7
+arrow-down-right: 84c159b4bcd9f244b0248255e9c0683b57f6f66a
+arrow-circle-up-right: 4a537f65f2c473781c7cd6d93b04c5fd3f747c6d
+arrow-block-right: 98f789c246bf6152cce1446ddc11a8e238d4fed7
+arrow-circle-broken-down: 5cdbaa2b51b880fcd7742462a9f62837a9f567c6
+arrow-circle-left: 06d72229e9dcf47841069f1a6f8f5e9fc73cc211
+arrow-block-up: 310eb7144b908d12475f59d294426b5b994532e4
+arrow-circle-broken-down-right: cfba06e7bf460e75dcb8b0f716fa9049a3b99793
+arrow-circle-down-right: ed0aa6aea5dd3604b1d9d4137b3734f7adcfd1bd
+arrow-block-left: 315dbb5e622adb6163297963b71aa71b952845a8
+arrow-block-down: b7c3f2478fbd9de037eea82b6ea2210808efd926
+arrows-left: 294de6d7aae3548003ecec6ffbfda083396157f7
+arrow-up-right: 65c80e96db45a25d576da90d4bd1918636596964
+arrows-down: fee9d5357092e383c5e7851e5cb89234767c55bc
+arrow-up: 19a2209ae268a918c149487dcee39410b7865e7a
+arrow-square-up-left: 85eec801e471f82caf6b2e45f8a45f499c718bbf
+arrow-square-up-right: f4602c4ba467f9899642e014385e828b5010fe99
+arrow-square-up: d45e1c9d06450190d41a51dce28500fc91c78023
+arrow-square-right: f881ac75cca6b52b8d53d5111712d8e1ba75ba9a
+arrow-up-left: 915b02667227f01cecff5135f7fd8df679b06ae1
+arrow-square-left: 4aec70ebbe0f2147072e37e1f78d7ec8ee64704c
+arrow-square-down-right: 6127ddbe109af23f6b3fc67136633375a5a37739
+arrow-square-down-left: f64efb1cfcfc2678878adb9cd41e42816bba07e3
+arrow-narrow-up-left: da6aebe1b7f7427dd7182e21a4aeb88aabd2cf4b
+arrow-narrow-up-right: 73930d611798c88b1ce651b8cff23c74d0ae1292
+arrow-narrow-up: 10a92a945cb4a460210a4212b316610a6f83ee85
+arrow-square-down: 89549e8b6d4fa7cc8f85643334b0a654117392f9
+arrow-right: 5725c84909ed91b4ea4d6b731de3baf921955e7f
+arrow-narrow-right: c810099fba5430fc015e28905e5c5712a618b1a1
+arrow-narrow-down-right: 9379b31ad1f895ca2e505e4289ac3b7c0a775c48
+arrow-narrow-down-left: 9d4b3f51ca1f7ac7ee9c46f618c26d65904e3592
+arrow-narrow-left: 237624d1555fabae5f1ab3d3b4d111e58c3ff2c7
+arrow-narrow-down: 13cdf053d3f7e3581a7620e0a0c5782afd7ec28a
+arrow-left: 8da6c493aec6564b2f5aa8e2b31bad76482ed0fb
+corner-up-right: 3b96b7db94af1dd24027b15e43e5aa1125ed829d
+expand-02: 4eb226bf01e6d35e54c3047cf376689f7dd72291
+corner-up-left: 5829fe8fbd8f638c38be261ed68ebbed6119aef2
+corner-left-up: 9a93392ae13c4896014d25225fedceb2a0d0ce05
+corner-left-down: 17cbd3a927872daf237069557c42e30446f3b41e
+corner-down-right: 11040e5a571a89a533a7c8fc71ab7035fba93d48
+corner-right-up: d5b89097c1f8c182cb0b287a58238a3098ec2ce1
+corner-down-left: b666780ac49ea8fd997bb3f9944eca4ceb76b745
+chevron-up-double: 48068cd7a27d8edafd80e1b534c216bcd4b218b2
+chevron-up: 93dfd14f027b96a04f37dbabdeb61a7fcb45a6ec
+chevron-selector-horizontal: f73593e0b84946ae426cd09e9cbb8a6d13f8920d
+expand-01: 53b1451f3c272636b3dbac11ed6e0b175835f0ec
+chevron-right-double: d62c54eaa97eec472a07e601ea3fb3e0b57921fd
+chevron-down: c5c4735622512fd997ba76d88d5ff1bd35e819d5
+chevron-right: 2dc98ed9104291892406dac396d0c53fe5cd201e
+chevron-left: bf480cf86fe29cf6aa11db0355f397102fd46903
+corner-right-down: 5708419ed151b302d1d9a93d3a598cf6d3ab0bfe
+arrows-triangle: be6450d16d77ceb13f0ad7aa24f7eee0175bebde
+chevron-down-double: 2bfa6bb9295091630f18428a0d87c1e6d1d41275
+chevron-selector-vertical: 00b657a7369d9d4ab74f62a9d60afc04c4e66353
+arrows-up: 9bd1d741447e14fc67beb67f64bbf8d457285ad1
+chevron-left-double: e8a292c928c2ffd528512d9ab101d6ceaae81423
+arrows-right: da41bdf7f3ad4dd766d4dd7d4f549ceb066ca5ae
+switch-vertical-02: 4585e576ce55da200814f0e77cceb71f9b38305c
+switch-vertical-01: a4099f42658f014ed73d70d323822badcf509854
+refresh-cw-05: ad1d9d1756d00927b7769ac5d229cef9447bf7ba
+refresh-cw-04: 5aeda4c0bf141c11800aa20c28eeff99b3b7c871
+refresh-cw-03: 0f358a2398ee889dc5a008b3357bcf712d3e9ac2
+switch-horizontal-02: 0ff9aba7c614971b579317420859439670842dc0
+refresh-ccw-04: ee40684f4937799062e11aba85186fedfb52afd8
+refresh-cw-02: c879659c94b096e38d9173d580b25c2f9cedcfb5
+refresh-cw-01: 707e57450f0c73c4cd7c1d042cf4a17dd5ee0986
+refresh-ccw-03: 6deb61d8adab370cf78733f6db4ec3e7a674618d
+refresh-ccw-02: cf1c4a4b2c963203bf6f9dc906b703583b60e790
+refresh-ccw-01: f705cb676cdaa859aa5c339068ece07aea2966d9
+refresh-ccw-05: 4ffec778ef2fddc2903d9dd36ff3303ed1842e14
+infinity: 06cb18e4644ccea37e771086adc5f46d5bf73d21
+flip-forward: 4078be3c4af0a2c2657ba7a001f09de172035fb3
+expand-06: a68ba024a042264ffaaab5ebd2cb6bbeff125bcd
+switch-horizontal-01: af1ad9d153faaed11b9c02a568d04a598ecebfce
+expand-03: 1e633d7af0c5cb7e937a62694b8463d868983432
+expand-05: b32f520228158d40db6bbf41e6f5f6706f0d0f83
+flip-backward: d265664b821fe077b13185af8f4bba16e46465c4
+reverse-right: 7dd1e898d5f1e8e1c767ee77a709c9046db7653a
+reverse-left: c6b83f3550a8b7b60d40d5006f920025fbf9124f
+expand-04: bbdb4cfc1b8b67468daf7a0b50be63a0ad8d8581
+user-check-01: 11ea309e4a20801a3e37e44bdcc16c9690418333
+user-02: baa4bf9dac3f7579ce764f7aa5296d7894262544
+user-01: a77a331b9f5e63d17c8f7904bcc8822ae872a7b2
+face-wink: 585726b75aa3b14c8e578eb5f435914855f1dfd0
+face-smile: 07f572920f9eace0bc3e7e91f39a3b9b9c951b96
+face-sad: e76906554a62f5cb275f2c5b210291257d7e3bb8
+user-03: c7e29f276405973aa33b36a97aa2a38c82d27cce
+face-happy: c0dd273d797d98a7541054440456b44599208f5b
+face-neutral: ac42ca0322b6a5bccb265b9d9f67eac0e9a12534
+face-frown: c5753e3adaf4dd075c8ccad1568c79f4e8dc5a85
+face-content: 86005374de0b5252cae47d9cf30eda298bd98e45
+user-plus-01: d17e0c4e7c0cc3d503f7cda4f2a43bb5864d7ea8
+user-minus-02: a6d00af3e1faa47fc0766d489e18623424489aa9
+user-minus-01: 1ae4d9cfd05fd9aa686ebb10eb1d581fa931517e
+user-left-02: 9711986515cde88be840d904bb72df6513f53030
+user-left-01: 7b33a4a69d83f8987eac84d26dd63e69834e76b4
+user-edit: 30f725bd93d75d96c8125d4318719ef0b9ebfa5f
+user-down-01: e66065feb124e9cc4fa6621066661dcf6decaccf
+user-circle: 1459d7a09c945f4ba2a7c55a7dddf9ea8a87b96b
+user-down-02: 36d262bc2bf7c44f56c99c5d4a4ce6b25aac0bd7
+user-plus-02: 3f033da08bd4efb9d853aa4cb7e71994b8d9e76b
+user-check-02: 94ee6b2bbf2e551847aa456b824f3f4dce06469b
+users-01: 250041cc33cb2a4b8057baf46abad1546127becd
+user-x-01: e4cd4eebc9f12da72d582c6e307b817d4ed99285
+users-check: 72e4d66fab3594b0e441b193f85137c25da22366
+user-up-02: db428b3c93c10fd4337cdfd4de517dbd5c537a8a
+user-up-01: b6dfd758b822993fc3a847fc8922b65332379b24
+user-square: fa4753e37e3f2279bddb60309a4b96ce944a2bbb
+user-right-01: fe02509a6231d472c71b650337e3116bbd8147c9
+user-x-02: 9f1b6f6aaf8e2a06956519f886d0295fd190e4be
+users-02: 951db55114c8fc902cda93e9902aeb75cff835be
+user-right-02: 438a5fce27de9293b16778a591a850788d06b800
+users-03: edd052c9de102c52004f205356cb63fd86b90ebd
+users-x: ad6f2898f604d264162ebafd8b9608158621036f
+users-up: 57e617192102275511ff0d9861e2eb3d848a7c03
+users-right: 01322f8fec8b44753c49ed1401a2b18982cf3e12
+users-plus: f100a4bf775b3d51e28d0749c0cdc934df164f21
+users-minus: af1da29eb347ab7b8d68b5f44e346c6f6d7b1737
+users-left: a1c0c7ef4b50e09e5c67bc9d976d8a8124c2f3a1
+users-edit: 8d54e6fd6b4a44a02ff7161e8ba19277132d1c08
+users-down: 6b5ae16196cfd3c83536ab2f450d54041757c120
+
+
+15. Selectors: 
+
+  Following are the properties for the selector component:
+  {
+    "Type" : "Toggle" | "Radio" | "Checkbox" // Type of the selector
+    "Size" : "sm" | "md", // Size of the selector, use consistent sizes across the design
+    "State" : "Default" | "Hover" | "Focused" | "Disabled", // State of the selector
+    "Interaction State" : "Default" | "Checked" | "Intermediate", // Interaction state of the selector
+    "Has Content" : true | false, // Whether the selector has content
+    "Has Main Text" : true | false, // Whether the selector has main text
+    "Has Hint Text" : true | false, // Whether the selector has hint text
+    "Main Text": string, // Main text of the selector, only when "Has Main Text" is true
+    "Hint Text" : string, // Hint text of the selector, only when "Has Hint Text" is true
+  }
+  Sample Required Properties Format: 
+
+  {
+    "Type" : "Toggle",
+    "Size" : "md",
+    "State" : "Default",
+    "Interaction State" : "Default",
+    "Has Content" : true,
+    "Has Main Text" : true,
+    "Has Hint Text" : true,
+    "Main Text" : "Main Text",
+    "Hint Text" : "Hint Text",
+  }
+
+  - Use the following selectors across the design to make it more engaging and cognitively informative
+
+  - Selector Component Keys: 
+     "6bc76dd7742582096ed682bf269af0f7944acfc4"
+
+16. Information Bar: 
+  - this component is used to display information in a card format. 
+    The editable props include:
+      -  Type: "Success" | "Error" | "Info" | "Warning" | "Yellow" | "Gray" | "Teal" | "Cyan" | "Magenta"
+      -  Has Action: true | false – Determines whether an action (i.e, button) is included.
+      -  Has Heading: true | false – Toggles the heading text visibility.
+      -  Heading: string - "TEXT" – Text content for the heading (if enabled).
+      -  Message: string - "TEXT" – Main body text or message of the information bar.
+
+
   {
     "type": "COMPONENT",
-    "componentName": "Image",
-    "key": "image_1", // Always send as image_1
+    "componentName": "Information Bar",
+    "key": "755e5a4a9708e8b91aaae75e180ee871f549f55e", // Always send as advert_card_1
     "properties": {
-      "src": "", // 
-      "alt": "" // Valid alt text for the image
-    }
-  }
+      "Type": "Success",
+      "Has Action": true,
+      "Has Heading": true,
+      "Heading": "Heading Text",
+      "Message": "Main body text or message of the information bar.",
 
-*/
+     "Action Button Size": "large" | "medium" | "small",
+     "Action Button Hierarchy": "Primary" | "Secondary" | "Danger" | "Success",
+     "Action Button Type": "Solid Fill" | "Subtle Fill" | "No Fill",
+     "Action Button State": "Default" | "Hover" | "Focused" | "Disabled",
+     "Action Button Width": "Half" | "Full", 
+     "Action Button Text": "string",
+     "Action Button Has Leading Icon": boolean,
+     "Action Button Has Trailing Icon": boolean,
+     "Action Button Leading Icon": "string",
+     "Action Button Trailing Icon": "string"
+    }
+   }
+
+
+17. Switch: 
+  - This component is used to toggle between two or more states.
+  - Use this as the component key: b9552b0d86f9ea97dc485b87fc54c9013d75bc09
+
+  The editable props include:
+    - Type: "Icons" | "Text" // Type of the switch content
+
+
+   {
+    "type": "COMPONENT",
+    "componentName": "Switch",
+    "key": "b9552b0d86f9ea97dc485b87fc54c9013d75bc09", // Always send as switch
+    "properties": {
+      "Type": "Icons" | "Text",
+      "Label Text": "string", // what the switch is for
+      "Switch Options": "string", // options for the switch, comma separated eg: "Option 1, Option 2, Option 3" always send 3 options
+      "Supporting Text": "string", // supporting text for the switch, dont send if not needed
+    }
+   }
+      
+REMEMBER: Your response must be ONLY a valid JSON object following the format shown above. Do not include any additional text, explanations, or markdown formatting. Make sure to not include any comments in the response.`;
+
+export const getJuspayDSPrompt = () => {
+  return `
+  ${JUSPAY_DS_INSTRUCTIONS}
+  ${INSTRUCTIONS}
+  ${JUSPAY_DS_COMPONENTS}
+  `
+} 
+
+
+

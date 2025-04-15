@@ -7,7 +7,6 @@ export function listComponentProperties(
   instance: InstanceNode
 ): Record<string, any> {
   const properties = instance.componentProperties;
-  console.log('Component Properties:', properties);
   return properties;
 }
 

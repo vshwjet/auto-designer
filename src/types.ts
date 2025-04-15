@@ -374,12 +374,13 @@ export interface LLMResponse {
 }
 
 export type PluginMessage = 
-  | { type: 'generate-design'; prompt: string }
+  | { type: 'generate-design'; prompt: string; designSystem: string; addToSidebar?: boolean }
   | { type: 'update-design'; prompt: string }
   | { type: 'cancel' }
   | { type: 'create-chart' }
   | { type: 'save-prompt'; prompt: string }
-  | { type: 'get-prompts' };
+  | { type: 'get-prompts' }
+  | { type: 'clear-prompts' };
 
 export interface DesignState {
   currentFrame: Frame | null;

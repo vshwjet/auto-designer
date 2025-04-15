@@ -2,7 +2,6 @@ export async function createInputFieldComponent(
   instance: InstanceNode,
   properties: any
 ) {
-  console.log('Creating input field component with properties:', properties);
   const props = {
     'Label Text#9987:546': properties.labelInfo || '',
     'Text Placeholder#10157:2': properties.placeholder || '',

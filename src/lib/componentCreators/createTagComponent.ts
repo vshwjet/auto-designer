@@ -2,7 +2,6 @@ export async function createTagComponent(
   instance: InstanceNode,
   properties: any
 ) {
-  console.log('Creating tag component with properties:', properties);
 
   // Create properly formatted properties object
   const mappedProps: { [key: string]: string | boolean } = {

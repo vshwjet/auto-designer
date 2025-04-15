@@ -1,5 +1,5 @@
 import { Frame } from '../types';
-import systemPrompt from './prompt';
+import { getJuspayDSPrompt } from '../prompts/juspay_ds_prompt';
 
 const config = {
   apiKey: process.env.AZURE_OPENAI_API_KEY as string,
@@ -30,28 +30,28 @@ interface OpenAIResponse {
   };
 }
 
-export async function generateDesign(prompt: string, currentState?: Frame) {
-  const messages: Message[] = [{ role: 'system', content: systemPrompt }];
+export async function generateDesign(prompt: string, context?: string) {
+  const messages: Message[] = [{ role: 'system', content: context ? context : getJuspayDSPrompt() }];
 
-  if (currentState) {
-    messages.push({
-      role: 'assistant',
-      content: JSON.stringify(
-        {
-          frame: currentState,
-        },
-        null,
-        2
-      ),
-    });
+  // if (currentState) {
+  //   messages.push({
+  //     role: 'assistant',
+  //     content: JSON.stringify(
+  //       {
+  //         frame: currentState,
+  //       },
+  //       null,
+  //       2
+  //     ),
+  //   });
 
-    // Add the incremental update instruction
-    messages.push({
-      role: 'system',
-      content:
-        "Above is the current design state. Please modify it according to the user's request while preserving the rest of the design. Return the complete updated design.",
-    });
-  }
+  //   // Add the incremental update instruction
+  //   messages.push({
+  //     role: 'system',
+  //     content:
+  //       "Above is the current design state. Please modify it according to the user's request while preserving the rest of the design. Return the complete updated design.",
+  //   });
+  // }
 
   messages.push({ role: 'user', content: prompt });
 
@@ -82,9 +82,8 @@ export async function generateDesign(prompt: string, currentState?: Frame) {
       );
     }
 
-    const data: OpenAIResponse = (await response.json()) as OpenAIResponse;
+    const data: any = (await response.json()) as OpenAIResponse;
     const content = data.choices[0].message.content;
-    console.log(content);
     try {
       return JSON.parse(content);
     } catch (error) {

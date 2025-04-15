@@ -5,7 +5,6 @@ const createImage = async (
   component: LLMResponseComponentType,
   parentFrame?: FrameNode
 ): Promise<RectangleNode | null> => {
-    console.log("Making image");
   try {
 
     let keyword = component.properties?.keyword;

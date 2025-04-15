@@ -4,6 +4,7 @@ export const createText = async (component: LLMResponseComponentType) => {
     const properties = component.properties;
     await figma.loadFontAsync({ family: 'Inter', style: "Regular" });
     const text = figma.createText();
+    // text.layoutSizingHorizontal = "FILL"
     text.characters = properties.text;
     text.fontSize = Number(properties.fontsize) || 24;
     text.fontName = { family: 'Inter', style: properties.fontweight };

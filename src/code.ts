@@ -11,6 +11,36 @@ import { createParentFrame } from './lib/createFlow';
 import { delay } from './lib/utils';
 import { generateDesign } from './services/openai';
 import { PluginMessage } from './types';
+import { LLMResponseType } from './types/llmResponseType';
+
+const temp_prompt = `
+You are a Senior Product Designer. For the given prompt, create a design layout and break down the requirements into smaller sections based on the layout that you think is best. 
+According to the layout, create a response in JSON formal with the following details:
+
+Since we have a limit on the number of token that you can respond with we want to break down the requirements into smaller sections. For each of the sections, create a new prompt from the original prompt, the prompt for each section should only contain the details for the section
+
+
+For example if someone asks you to create a dashboard with a sidebar and a main content area, you should create a layout with a sidebar and a main content area. 
+
+For example
+
+{
+"response":{
+   a parent frame (for the artboard) of type LLMResponseFrameType with type = "PARENT"
+
+   in the children array, add two frame of type LLMResponseFrameType with type = "FRAME"  // since this is a layout that you have already decided for we can directly add as a FRAME
+    1. a frame for the sidebar of type LLMResponseFrameType with type = "PROMPT_SEGMENT", // inside this, add a key "prompt" with the prompt for the section 
+    2. a frame for the main content area of type LLMResponseFrameType with type = "PROMPT_SEGMENT" // inside this, add a key "prompt" with the prompt for the section
+  } 
+}
+
+
+Each children that has as a PROMPT_SEGMENT type, will have a prompt key inside it.
+We will use this prompt to generate the design for the section.
+So make sure to add a proper prompt accordingly
+
+Maintain consistency across all the sections
+`
 
 function parseNumberedList(input: string): string[] {
   return input
@@ -27,6 +57,72 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
           throw new Error('Design prompt is required');
         }
 
+        const sidebarReq = msg.addToSidebar; 
+
+        if(sidebarReq){
+          const artboard = figma.createFrame();
+          artboard.resize(1728, 1024);
+          figma.currentPage.appendChild(artboard);
+  
+          artboard.name = 'Flow';
+          artboard.layoutMode = 'HORIZONTAL';
+          artboard.layoutSizingVertical = "HUG"
+          artboard.primaryAxisSizingMode = 'FIXED';
+          artboard.primaryAxisAlignItems = "MAX";
+          // Add light grey background to the parent frame
+          artboard.fills = [{
+            type: 'SOLID',
+            color: { r: 0.95, g: 0.95, b: 0.95 },
+            opacity: 1
+          }];
+
+          const sidebarFrame = figma.createFrame();
+          sidebarFrame.resize(500, sidebarFrame.height);
+          artboard.appendChild(sidebarFrame);
+
+          sidebarFrame.name = 'Sidebar';
+          sidebarFrame.layoutMode = 'VERTICAL';
+          sidebarFrame.layoutSizingVertical = "HUG"
+          sidebarFrame.counterAxisSizingMode = 'FIXED';
+          // Ensure sidebar has white background
+          sidebarFrame.fills = [{
+            type: 'SOLID',
+            color: { r: 1, g: 1, b: 1 },
+            opacity: 1
+          }];
+          
+          figma.notify('Generating sidebar design...');
+          
+          // Parse the prompts just like in the regular flow
+          const prompts = parseNumberedList(msg.prompt);
+          
+          // Process each prompt and add to the sidebar
+          for (const prompt of prompts) {
+            console.log('--------------- \n Getting sidebar prompt design: ', `Generating for a sidebar: ${prompt}`);
+            const designSpec: LLMResponseType = await generateDesign(prompt);
+            const flowDetails = designSpec.section;
+            console.log('flowDetails for sidebar item', flowDetails);
+            
+            // Add the design to the sidebar frame instead of artboard
+            await createParentFrame(flowDetails, sidebarFrame);
+            
+            await delay(3000);
+            console.log('--------------- \n');
+          }
+          
+          figma.viewport.scrollAndZoomIntoView([artboard]);
+          
+          await savePrompt(msg.prompt);
+          figma.notify('Sidebar design generation completed!', {timeout: 1000});
+          return;
+        }
+
+        // const designSpec: any = await generateDesign(msg.prompt, temp_prompt);
+        // console.log(designSpec);
+
+
+        // --------- OLD --------
+
         figma.notify('Generating design...');
 
         const prompts = parseNumberedList(msg.prompt);
@@ -40,13 +136,15 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
         
 
         for (const prompt of prompts) {
-          const designSpec: any = await generateDesign(prompt);
+          console.log('--------------- \n Getting prompt design: ', prompt);
+           const designSpec: LLMResponseType = await generateDesign(prompt);
           const flowDetails = designSpec.section;
-
+          console.log('flowDetails', flowDetails);
+          
           await createParentFrame(flowDetails, artboard);
-
+          
           await delay(3000);
-          console.log('Getting next prompt response');
+          console.log('--------------- \n');
         }
 
         // Scroll to the generated content after completion
@@ -77,7 +175,26 @@ figma.ui.onmessage = async (msg: PluginMessage) => {
         // createInstance("8da576d58256bec6595649022b5c864d39d862ee");
 
         //input field
-        createInstance("8b7de6b46a9f5382402012f5c8613936d5206669");
+        // createInstance("8b7de6b46a9f5382402012f5c8613936d5206669");
+
+
+        // createInstance("755e5a4a9708e8b91aaae75e180ee871f549f55e");
+
+
+        break;
+      case 'clear-prompts':
+        // Clear the saved prompts
+        figma.clientStorage.setAsync('savedPrompts', [])
+          .then(() => {
+            // Notify the UI that prompts have been cleared
+            figma.ui.postMessage({
+              type: 'saved-prompts',
+              prompts: []
+            });
+          })
+          .catch(error => {
+            console.error('Failed to clear prompts:', error);
+          });
         break;
     }
   } catch (error) {
@@ -96,12 +213,10 @@ async function savePrompt(prompt: string) {
   prompts.push(prompt);
 
   await figma.clientStorage.setAsync("userPrompts", prompts);
-  console.log("Prompt saved:", prompt);
 }
 
 async function getSavedPrompts() {
   const prompts = await figma.clientStorage.getAsync("userPrompts") || [];
-  console.log("Saved Prompts:", prompts);
   return prompts;
 }
 
@@ -120,8 +235,19 @@ const createInstance = async (key: string) => {
   parentFrame.appendChild(instance);
 
 
-  if(key == "e65e73efaa3409f22911401412152d8e46593643"){
-    console.log('stat card');
+  // if(key == "e65e73efaa3409f22911401412152d8e46593643"){
+  //   console.log('stat card');
+  // }
+
+  if(key == "755e5a4a9708e8b91aaae75e180ee871f549f55e"){
+    console.log('info bar');
+
+    instance.setProperties({
+      "Type": "Teal",
+      "Message#10026:3": "sdfsdfs",
+      "Heading#10026:0": "Heading Text",
+      "Has Action#10026:18": true,
+    })
   }
 
 
@@ -165,107 +291,3 @@ const createInstance = async (key: string) => {
 }
 
 
-// createImageFromUrl("https://i.ibb.co/CKv1sSfT/Screenshot-2025-03-26-at-4-19-21-PM.png", {
-        //   width: 500,
-        //   height: 500,
-        //   cornerRadius: 10,
-        //   name: "Google Logo",
-        //   scaleMode: "FIT"
-        // })
-        // const statCardFrame = figma.createFrame();
-        // statCardFrame.resize(1726, 1080);
-        // statCardFrame.layoutMode = "HORIZONTAL";
-        // statCardFrame.layoutSizingHorizontal = "HUG";
-        // statCardFrame.paddingTop = 100;
-        // statCardFrame.paddingRight = 100;
-        // statCardFrame.paddingBottom = 100;
-        // statCardFrame.paddingLeft = 100;
-
-
-        //  const importedComponent = await figma.importComponentByKeyAsync("e65e73efaa3409f22911401412152d8e46593643");
-        // const statCardInstance = importedComponent.createInstance();
-        // statCardFrame.appendChild(statCardInstance);
-
-        // statCardInstance.setProperties({
-        //   "Stat Label#27356:0": "Total Revenue",
-        //   "Stat Value#27356:5": "$50,000",
-        //   "Stat Delta#27356:10": "+12%",
-        //   "Trend": "Uptrend",
-        //   "Type": "Action"
-        // });
-
-        // ------------------------------------------------------------
-
-
-
-        // figma.notify('Chart creation requested');
-        // const chartFrame = figma.createFrame();
-        // chartFrame.resize(1726, 1080);
-        // chartFrame.layoutMode = "VERTICAL";
-        // chartFrame.layoutSizingHorizontal = "HUG";
-        // figma.currentPage.appendChild(chartFrame);
-        // chartFrame.paddingTop = 100;
-        // chartFrame.paddingRight = 100;
-        // chartFrame.paddingBottom = 100;
-        // chartFrame.paddingLeft = 100;
-
-        // figma.ui.postMessage({
-        //   type: 'status',
-        //   message: 'Chart creation completed!',
-        // });
-
-        // const importedComponent = await figma.importComponentByKeyAsync("d23b37c43e17e6dc198003affcc8a7ba22567863");
-        // const barChartInstance = importedComponent.createInstance();
-        // chartFrame.appendChild(barChartInstance);
-        // barChartInstance.layoutSizingHorizontal = "FILL";
-
-        // const header = barChartInstance.findOne(node => node.name === "Header") as InstanceNode;
-        // console.log('header', header);
-        // header.setProperties({
-        //   "Subtext#27504:335": "sss"
-        // })
-        // const barChartDropdown = header.findOne(node => node.name === "Dropdown") as InstanceNode;
-        // const barChartDropdownButton = barChartDropdown.findOne(node => node.name === "Button") as InstanceNode;
-        // barChartDropdownButton.setProperties({
-        //   "Button Text#9995:0": "Test"
-        // })
-
-
-        // const chartBody = barChartInstance.findOne(node => node.name === "Chart Body") as InstanceNode;
-
-        // chartBody.setProperties({
-        //   "Chart Type": "Bar",
-        //   "Data Point": "5",
-        //   "State": "Default",
-        //   "X-Axis": "NA",
-        //   "Y-Axis": "7",
-        //   "X-Axis Text#27504:167": "X-Axis Title",
-        //   "Y-Axis Text#27432:0": "Y-Axis Title",
-        //   "Has Legend#27723:0": false,
-        //   "Has X-Axis Title#27410:25": true,
-        //   "Has Y-Axis Title#27410:0": true,
-        // })
-
-
-        // const lineChartInstance = importedComponent.createInstance();
-        // chartFrame.appendChild(lineChartInstance);
-        // lineChartInstance.layoutSizingHorizontal = "FILL";
-        // const lineHeader = lineChartInstance.findOne(node => node.name === "Header") as InstanceNode;
-        // lineHeader.setProperties({
-        //   "Subtext#27504:335": "sss"
-        // })
-
-        // const lineChartBody = lineChartInstance.findOne(node => node.name === "Chart Body") as InstanceNode;
-        // listComponentProperties(lineChartBody);
-        // lineChartBody.setProperties({
-        //   // "Chart Type": "Line",
-        //   "Data Point": "5",
-        //   "State": "Default",
-        //   "X-Axis": "8",
-        //   "Y-Axis": "6",
-        //   // "X-Axis Text#27504:167": "X-Axis Title",
-        //   // "Y-Axis Text#27432:0": "Y-Axis Title",
-        //   // "Has Legend#27723:0": true,
-        //   // "Has X-Axis Title#27410:25": true,
-        //   // "Has Y-Axis Title#27410:0": true,
-        // })

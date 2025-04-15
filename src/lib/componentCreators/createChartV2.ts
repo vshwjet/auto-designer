@@ -4,29 +4,24 @@ const createChartv2 = (
     instance: InstanceNode,
     component: LLMResponseComponentType
 ) => {
-    console.log('Creating chart', component, component.key);
+
     instance.layoutSizingHorizontal = "FILL";
 
     const properties = component.properties;
-    console.log('properties', properties);
 
     // Handle header component (title and subtext)
     const header = instance.findOne(node => node.name === "Header") as FrameNode;
-    console.log('Found header:', !!header);
 
     if (header) {
         const title = header.findOne(node => node.name === "Title") as FrameNode;
-        console.log('Found title:', !!title);
 
         if (title) {
             const name = title.findOne(node => node.name === "Name") as FrameNode;
-            console.log('Found name:', !!name);
 
             if (name) {
                 const dropdownInstance = name.findOne(node =>
                     node.type === "INSTANCE" && node.name.includes("Dropdown")
                 ) as InstanceNode;
-                console.log('Found dropdown instance:', !!dropdownInstance);
 
                 if (dropdownInstance) {
                     const buttonNode = dropdownInstance.findOne(node =>
@@ -40,12 +35,8 @@ const createChartv2 = (
 
                         if (textNode) {
                             textNode.characters = properties["Title"] || "Title";
-                            console.log('Successfully updated button text to:', properties["Title"]);
-                        } else {
-                            console.log('Text node not found in Button component');
                         }
                     } else {
-                        console.log('Button node not found in dropdown instance');
 
                         const findDropdownButton = (node: SceneNode): TextNode | null => {
                             if (node.type === 'TEXT' && node.name.includes('Button Text')) {
@@ -62,11 +53,9 @@ const createChartv2 = (
                         };
 
                         const dropdownButton = findDropdownButton(dropdownInstance);
-                        console.log('Found dropdown button:', !!dropdownButton);
 
                         if (dropdownButton) {
                             dropdownButton.characters = properties["Title"] || "Title";
-                            console.log('Successfully updated dropdown text to:', properties["Title"]);
                         }
                     }
                 }
@@ -80,24 +69,16 @@ const createChartv2 = (
 
     if (subtextNode) {
         subtextNode.characters = properties["Title Subtext"] || "Subtext about the graph here";
-        console.log('Successfully updated subtext to:', properties["Title Subtext"]);
-    } else {
-        console.log('Subtext node not found');
     }
-
     // Handle body component (chart properties)
     const body = instance.findOne(node => node.name === "Body") as InstanceNode;
-    console.log('Found body:', !!body);
 
     if (body) {
 
         if (properties["Chart Type"]) {
             const chartTypeVariant = properties["Chart Type"];
             body.setProperties({ "Chart Type": chartTypeVariant });
-            console.log('Set Chart Type to:', chartTypeVariant);
         }
-    } else {
-        console.log('Body component not found');
     }
 }
 
@@ -111,17 +92,13 @@ export const createChart = async (chartInstance: InstanceNode, component: LLMRes
     chartInstance.layoutSizingVertical = "HUG";
     if (header && body) {
 
-        console.log("Got header and body", component);
-        console.log(component.properties["Chart Header Subtext"], component.properties["Chart Title"]);
         header.setProperties({
             "Subtext#27504:335": component.properties["Chart Header Subtext"] || "Subtext about the graph here",
         })
 
         const dropdownInstance = header.findOne(node => node.name === "Dropdown") as InstanceNode;
-        console.log("Got dropdown instance", dropdownInstance);
         if (dropdownInstance) {
             const buttonNode = dropdownInstance.findOne(node => node.name === "Button") as InstanceNode;
-            console.log("Got button node", buttonNode);
             if (buttonNode) {
                 buttonNode.setProperties({
                     "Button Text#9995:0": component.properties["Chart Title"] || "Chart Title",
